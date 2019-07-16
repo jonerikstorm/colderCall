@@ -1,5 +1,5 @@
 # colderCall
-A web-based tool for calling on random students to enhance checks for understanding.
+A web-based tool for calling on random students to enhance checks for understanding as used in the latest instructional models.
 ##  Dependencies:
 This app was designed with 
 * PHP 7.3
