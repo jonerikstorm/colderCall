@@ -7,7 +7,7 @@ $answer_sql = "INSERT INTO `ANSWERS` (`timestamp`,`student_id`,`correct`) VALUES
 $incrementCorrect_sql = "UPDATE `STUDENTS` SET `correct` = :correcto WHERE `id`=:id;";
 $incrementIncorrect_sql = "UPDATE `STUDENTS` SET `incorrect` = :incorrecto WHERE `id` = :id;";
 $saveEnabled_sql = "UPDATE `STUDENTS` SET `enabled` = :enabled WHERE `id` = :id;";
-$updatePrefs_sql = "UPDATE `userPreferences` SET `defaultPeriod` = :defaultPeriod, `allowVolunteers` = :allowVolunteers, `allowRepeats` = :allowRepeats WHERE `id`=1;";
+$updatePrefs_sql = "UPDATE `userPreferences` SET `numPeriods` = :numPeriods, `defaultPeriod` = :defaultPeriod, `allowVolunteers` = :allowVolunteers, `allowRepeats` = :allowRepeats WHERE `id`=1;";
 
 // Check $_POST for self-AJAXing to update who was called
 if (!$_POST) {
@@ -22,9 +22,13 @@ if (!$_POST) {
 	$students =  $db->query($load_sql)->fetchAll(PDO::FETCH_OBJ);
 	$userPrefs = $db->query($prefs_sql)->fetchAll(PDO::FETCH_ASSOC);
 } else {
+
+    //add features that makes it so that nothing but this page on this server can POST
     $timeZone = new DateTimeZone('America/Los_Angeles');
     $dt = new DateTime();
     $dt->setTimezone($timeZone);
+    //do I really need a new PDO for each switch case, or do we just need it for the new page load?
+    //why did INSERT work on the original PDO but UPDATE did not? Weird.
     switch ($_POST["action"]) {
         case "correct":
             $db2 = new PDO("sqlite:coldcalls.sqlite3");
@@ -45,7 +49,7 @@ if (!$_POST) {
             break;
         case "updatePrefs":
             $db4 = new PDO("sqlite:coldcalls.sqlite3");
-            $db4->prepare($updatePrefs_sql)->execute(['defaultPeriod' => $_POST['defaultPeriod'], 'allowVolunteers' => $_POST['allowVolunteers'], 'allowRepeats' => $_POST['allowRepeats']]);
+            $db4->prepare($updatePrefs_sql)->execute(['numPeriods' => $_POST['numPeriods'],'defaultPeriod' => $_POST['defaultPeriod'], 'allowVolunteers' => $_POST['allowVolunteers'], 'allowRepeats' => $_POST['allowRepeats']]);
             exit;
             break;
     }
@@ -90,11 +94,12 @@ if(isset($_GET['p'])) {
 
 <script>
 "use strict";
-
+//Try to limit the use of globals. Better yet, eliminate them.
 //Get the data from the database via PHP
 let students = JSON.parse('<?php echo json_encode($students,JSON_NUMERIC_CHECK ); ?>',(k, v) => v === "true" ? true : v === "false" ? false : v);
 let userPreferences = JSON.parse('<?php echo json_encode($userPrefs[0], JSON_NUMERIC_CHECK); ?>',(k, v) => v === "true" ? true : v === "false" ? false : v);
 let currentPeriod;
+
 
 //Set the globals; a GET overrides user default.
 let getPeriod = <?php echo $getPeriod ?>;
@@ -110,12 +115,30 @@ let lastID = null;
 $(document).ready(function () {
 
     //Initialize the fancy dropdown menu
-    $("#p1").click(function () {currentPeriod = 1; updateTable();});
-    $("#p2").click(function () {currentPeriod = 2; updateTable();});
-    $("#p3").click(function () {currentPeriod = 3; updateTable();});
-    $("#p4").click(function () {currentPeriod = 4; updateTable();});
-    $("#p5").click(function () {currentPeriod = 5; updateTable();});
-    $("#p6").click(function () {currentPeriod = 6; updateTable();});
+    $("#p1").click(function () {
+        currentPeriod = 1;
+        updateTable();
+    });
+    $("#p2").click(function () {
+        currentPeriod = 2;
+        updateTable();
+    });
+    $("#p3").click(function () {
+        currentPeriod = 3;
+        updateTable();
+    });
+    $("#p4").click(function () {
+        currentPeriod = 4;
+        updateTable();
+    });
+    $("#p5").click(function () {
+        currentPeriod = 5;
+        updateTable();
+    });
+    $("#p6").click(function () {
+        currentPeriod = 6;
+        updateTable();
+    });
 
     //Initialize the student table
     $("#bigTable").hide();
@@ -131,9 +154,10 @@ $(document).ready(function () {
     //Hook the action of the correct button to choosing a new person, updating their correct tally
     //Don't try and update the Volunteer's count
     $("#correct").click(function () {
-        if (lastID !==0){
-            for(let i in students) {
-                if (students[i]["id"]===lastID) {students[i]["correct"]++;
+        if (lastID !== 0) {
+            for (let i in students) {
+                if (students[i]["id"] === lastID) {
+                    students[i]["correct"]++;
                     $.post("random.php",
                         {
                             action: "correct",
@@ -153,9 +177,9 @@ $(document).ready(function () {
     //Hook the action of the incorrect button to pickign a new person, updating their incorrect tally
     //Don't try and update the Volunteer's count
     $("#incorrect").click(function () {
-        if (lastID !==0){
-            for(let i in students) {
-                if (students[i]["id"]===lastID) {
+        if (lastID !== 0) {
+            for (let i in students) {
+                if (students[i]["id"] === lastID) {
                     students[i]["incorrect"]++;
                     $.post("random.php",
                         {
@@ -189,6 +213,8 @@ $(document).ready(function () {
         $("#preferencesTable").toggle();
     });
 
+    //Programatically fill the period dropdown menu
+    periodMenuDropDownf();
 
 });
 
@@ -206,6 +232,21 @@ function saveEnabled() {
     }
 }
 
+function periodMenuDropDownf() {
+//Erase what's there.
+    $("#periodDropDownMenu").empty();
+    for (let i=1; (i-1) < userPreferences.numPeriods;i++) {
+
+            $("#periodDropDownMenu").append('<span class="dropdown-item" id="p'
+                + i
+                + '">'
+                + i
+                + "</span>");
+
+        }
+
+}
+
 function updatePrefs () {
     //Erase what's there and draw again
 	$("#preferencesTableItems").empty().append('<tr><td>Default Period</td><td><div class="form-group">'
@@ -216,9 +257,28 @@ function updatePrefs () {
                 +'</td></tr><tr><td>Allow Repeats<td><div class="form-check-inline"><label class="form-check-label"><input type="checkbox" onclick="toggleRepeats();" class="form-check-input"'
 		+ ((userPreferences["allowRepeats"])? "checked":"unchecked")
 		+' id="allowRepeatsCheckBox"></label></div></td></tr>'
-                );
+        +'<tr><td>Number of Periods</td><td><div class="form-group">'
+    +'<select class="form-control-sm" id="numPeriodSelector" onchange="updateNumPeriods();"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select></div>'
+    +'</td></tr>');
 	$("#defaultPeriodSelector").val(userPreferences["defaultPeriod"]);
+    $("#numPeriodSelector").val(userPreferences["numPeriods"]);
 }
+
+function updateNumPeriods()
+{
+    userPreferences["numPeriods"] = $("#numPeriodSelector").val();
+    $.post("random.php",
+        {
+            action: "updatePrefs",
+            defaultPeriod: userPreferences["defaultPeriod"],
+            allowVolunteers: userPreferences["allowVolunteers"],
+            allowRepeats: userPreferences["allowRepeats"],
+            numPeriods: userPreferences["numPeriods"]
+        }
+    );
+    periodMenuDropDownf();
+}
+
 function updatePeriod()
 {
     userPreferences["defaultPeriod"] = $("#defaultPeriodSelector").val();
@@ -230,7 +290,9 @@ function updatePeriod()
             allowRepeats: userPreferences["allowRepeats"]
         }
     );
-}function toggleVolunteers()
+}
+
+function toggleVolunteers()
 {
     userPreferences["allowVolunteers"] === true ? userPreferences["allowVolunteers"] = false:userPreferences["allowVolunteers"] = true;
     updatePrefs();
@@ -270,49 +332,59 @@ function updateTable () {
             $("#studentTable").append("<tr><td>" + students[i]["id"]
                 + "</td><td>"
                 + students[i]["f_name"]
+                    + " "
+                    + students[i]["l_name"]
                 + "</td><td>"
+                    // add a slider for bias
+                + '<div class="slidecontainer"><input type="range" min="-10" max="10" value="0" class="slider" id="slide'
+                +  students[i]["id"]
+                + '"></div></td><td>'
                 + ((students[i]["correct"] > 0 || students[i]["incorrect"] > 0) ? Math.round(((students[i]["correct"]) / (students[i]["correct"] + students[i]["incorrect"])) * 100)+"%" :" ")
                 + '</td><td><div class="form-check-inline"><label class="form-check-label">'
                 + '<input type="checkbox" class="form-check-input" onclick="toggleStudentEnabled('
                 + i
                 + ');"'
                 + ((students[i]["enabled"]) ? "checked" : "unchecked")
-                + ' id=checkButton'
+                + ' id="checkButton'
                 + students[i]["id"]
-                + '></label></div></td></tr>'
+                + '"></label></div></td></tr>'
             );
 
         }
     }
 }
+
+//add a function that auto biases, trying to get more involvement from those who answer poorly.
 function selectStudent (period) {
-// Pick from the list unless they are disabled, unless we don't want repeats and they are the most recent. Add volunteer to the list if option is enabled.
-let studentsCopy = JSON.parse(JSON.stringify(students));
-let studentsSelectable = [{"id":0,"f_name" : "Volunteer",  "l_name": "", "enabled" : false, "period" :period},{"id":1}];
-let j=1;
-for (let i in studentsCopy)
-{
-    if (studentsCopy[i]["period"]===period) {
-        studentsSelectable[j] = studentsCopy[i];
-        j++;
+//Re do this so that it makes an array of the in-play student IDs instead of the array indexes, applies biasing, and then
+    //returns the student ID
+    // Pick from the list unless they are disabled, unless we don't want repeats and they are the most recent. Add volunteer to the list if option is enabled.
+    let studentsCopy = JSON.parse(JSON.stringify(students));
+    let studentsSelectable = [{"id":0,"f_name" : "Volunteer",  "l_name": "", "enabled" : false, "period" :period},{"id":1}];
+    let j=1;
+    for (let i in studentsCopy)
+    {
+        if (studentsCopy[i]["period"]===period) {
+            studentsSelectable[j] = studentsCopy[i];
+            j++;
+        }
     }
-}
-let winner = 1;
+    let winner = 1;
 
-studentsSelectable[0]["enabled"] = userPreferences["allowVolunteers"] === true;
-if (!userPreferences["allowRepeats"]) {
-    do {
-        winner = Math.floor(Math.random() *  Math.floor(Object.keys(studentsSelectable).length))
-    }  while ((studentsSelectable[winner]["id"] === lastID || !studentsSelectable[winner]["enabled"]) && j>2);
+    studentsSelectable[0]["enabled"] = userPreferences["allowVolunteers"] === true;
+    if (!userPreferences["allowRepeats"]) {
+        do {
+            winner = Math.floor(Math.random() *  Math.floor(Object.keys(studentsSelectable).length))
+        }  while ((studentsSelectable[winner]["id"] === lastID || !studentsSelectable[winner]["enabled"]) && j>2);
 
-} else {
-    do {
-        winner = Math.floor(Math.random() * Math.floor(Object.keys(studentsSelectable).length))
-    } while (!studentsSelectable[winner]["enabled"] && j>2);
+    } else {
+        do {
+            winner = Math.floor(Math.random() * Math.floor(Object.keys(studentsSelectable).length))
+        } while (!studentsSelectable[winner]["enabled"] && j>2);
+        }
+    lastID = studentsSelectable[winner]["id"];
+    return studentsSelectable[winner]["f_name"] + " " + studentsSelectable[winner]["l_name"];
     }
-lastID = studentsSelectable[winner]["id"];
-return studentsSelectable[winner]["f_name"] + " " + studentsSelectable[winner]["l_name"];
-}
 </script>
 </head>
 <body>
@@ -340,16 +412,13 @@ return studentsSelectable[winner]["f_name"] + " " + studentsSelectable[winner]["
             <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
                 Periods
             </button>
-            <div class="dropdown-menu">
-                <span class="dropdown-item" id="p1">1</span>
-                <span class="dropdown-item" id="p2">2</span>
-                <span class="dropdown-item" id="p3">3</span>
-                <span class="dropdown-item" id="p4">4</span>
-                <span class="dropdown-item" id="p5">5</span>
-                <span class="dropdown-item" id="p6">6</span>
+            <div class="dropdown-menu" id="periodDropDownMenu">
+             <!--   //Programatically generate, but then make sure they don't go away when in the database -->
             </div>
         </div>
 </div>
+<!--    //maybe add a timer with an option to countdown and an optional stopwatch widget alonog with
+    //confirmation that the updates have been made or errors thrown here. -->
 <div id="statusBar"></div>
 <div class="table-responsive-sm" id="preferencesTable">
         <table class="table table-hover">
@@ -370,6 +439,7 @@ return studentsSelectable[winner]["f_name"] + " " + studentsSelectable[winner]["
 		<tr>
 			<th>#</th>
 			<th>Name</th>
+            <th>Bias</th>
 			<th>% Correct</th>
 			<th>Enabled</th>
 		</tr>
