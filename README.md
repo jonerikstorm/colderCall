@@ -13,7 +13,9 @@ This version comes with the JavaScript dependencies in the static/ folder and wi
 On load, it will pick a volunteer from your default class. Click on "correct", "skip", or "incorrect". The database will keep a count of correct and incorrect answers given. "Skip" just chooses a new person.
 Clicking on "Students" shows you a list of the students in the current period. This lets you see how they are doing. If a student is absent, you can click the checkbox to uncheck "enabled." If that student for whatever reason should not be cold-called, you can save the statuses. (Note for future: we should separate absent and disabled).
 ## Preferences
-You can set a default period, whether you want it to be truly random and allow repeats, and, if you want to allow volunteers from time to time by having "Volunteer" be a possible result. This settings are saved in the database. 
+You can set a default period, whether you want it to be truly random and allow repeats, and, if you want to allow volunteers from time to time by having "Volunteer" be a possible result. You may specify the number of periods, up to 9. Let me know if this number isn't high enough. Note that accidentally changing the number of periods will not delete your students data if it's in the database. Changing it on purpose won't do it either.
+
+These settings are saved in the database. 
 ## Bookmarks
 You can create bookmarks in your browser to go directly to periods. For example "https://myserver/random.php?p=2" will take you directly to second period.
 ## Roadmap
