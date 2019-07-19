@@ -8,6 +8,7 @@ $answer_sql = "INSERT INTO `ANSWERS` (`timestamp`,`student_id`,`correct`) VALUES
 $incrementCorrect_sql = "UPDATE `STUDENTS` SET `correct` = :correcto WHERE `id`=:id;";
 $incrementIncorrect_sql = "UPDATE `STUDENTS` SET `incorrect` = :incorrecto WHERE `id` = :id;";
 $saveEnabled_sql = "UPDATE `STUDENTS` SET `enabled` = :enabled WHERE `id` = :id;";
+$saveAbsent_sql = "UPDATE `STUDENTS` SET `absent` = :absent, `absentDate` = :date WHERE `id` = :id;";
 $updatePrefs_sql = "UPDATE `userPreferences` SET `numPeriods` = :numPeriods, `defaultPeriod` = :defaultPeriod, `allowVolunteers` = :allowVolunteers, `allowRepeats` = :allowRepeats WHERE `id`=1;";
 
 // Check $_POST for self-AJAXing to update who was called
@@ -18,6 +19,9 @@ if (!file_exists('coldcalls.sqlite3')) {
     echo "Initializing database.";
     }
 
+$timeZone = new DateTimeZone('America/Los_Angeles');
+$dt = new DateTime();
+$dt->setTimezone($timeZone);
 if (!$_POST) {
     try {
         $db = new PDO("sqlite:coldcalls.sqlite3");
@@ -28,13 +32,17 @@ if (!$_POST) {
         exit;
     }
 	$students =  $db->query($load_sql)->fetchAll(PDO::FETCH_OBJ);
+    foreach ($students as $student) {
+        if ($student->absentDate != $dt->format('Y-m-d')) {
+            $student->absent = false; $student->absentDate = null;
+            $db->prepare("UPDATE `STUDENTS` SET absent = 'false', absentDate = null where `id` = :id;")->execute(['id' => $student->id]);
+         }
+    }
 	$userPrefs = $db->query($prefs_sql)->fetchAll(PDO::FETCH_ASSOC);
 } else {
 
     //add features that makes it so that nothing but this page on this server can POST
-    $timeZone = new DateTimeZone('America/Los_Angeles');
-    $dt = new DateTime();
-    $dt->setTimezone($timeZone);
+
     //do I really need a new PDO for each switch case, or do we just need it for the new page load?
     //why did INSERT work on the original PDO but UPDATE did not? Weird.
     switch ($_POST["action"]) {
@@ -53,6 +61,11 @@ if (!$_POST) {
         case "saveEnabled":
             $db5 = new PDO("sqlite:coldcalls.sqlite3");
             $db5->prepare($saveEnabled_sql)->execute(['enabled' => $_POST['enabled'], 'id' => $_POST['id']]);
+            exit;
+            break;
+        case "saveAbsent":
+            $db5 = new PDO("sqlite:coldcalls.sqlite3");
+            $db5->prepare($saveAbsent_sql)->execute(['absent' => $_POST['absent'], 'id' => $_POST['id'],'date' => $dt->format('Y-m-d')]);
             exit;
             break;
         case "updatePrefs":
@@ -105,6 +118,7 @@ if(isset($_GET['p'])) {
 //Try to limit the use of globals. Better yet, eliminate them.
 //Get the data from the database via PHP
 let students = JSON.parse('<?php echo json_encode($students,JSON_NUMERIC_CHECK ); ?>',(k, v) => v === "true" ? true : v === "false" ? false : v);
+//reset absences
 let userPreferences = JSON.parse('<?php echo json_encode($userPrefs[0], JSON_NUMERIC_CHECK); ?>',(k, v) => v === "true" ? true : v === "false" ? false : v);
 let currentPeriod;
 
@@ -327,11 +341,38 @@ function toggleRepeats()
     );
 }
 function toggleStudentEnabled(IDnumber)
-    {
-        students[IDnumber]["enabled"] === true ? students[IDnumber]["enabled"] = false:students[IDnumber]["enabled"] = true;
+{
+    students[IDnumber]["enabled"] === true ? students[IDnumber]["enabled"] = false:students[IDnumber]["enabled"] = true;
+    updateTable();
+}
+
+function toggleStudentAbsent(IDnumber) {
+    if (IDnumber !== 0) {
+        students[IDnumber]["absent"] === true ? students[IDnumber]["absent"] = false : students[IDnumber]["absent"] = true;
+        $.post("random.php",
+            {
+                action: "saveAbsent",
+                id: students[IDnumber]["id"],
+                absent: students[IDnumber]["absent"]
+            }
+        );
         updateTable();
     }
+}
 
+function getIndexByID(idno)
+{
+    for (i in students) {
+        if (students[i]["id"] === idno) { return i;}
+    }
+}
+
+function getIDbyIndexBy(idxno)
+{
+    for (i in students) {
+        if (idxno === students[i]["id"]) { return students[i]["id"];}
+    }
+}
 function updateTable () {
     //Erase what's there.
     $("#studentTable").empty();
@@ -346,8 +387,16 @@ function updateTable () {
                     // add a slider for bias
                 + '<div class="slidecontainer"><input type="range" min="-10" max="10" value="0" class="slider" id="slide'
                 +  students[i]["id"]
-                + '"></div></td>'
+                + '"></div></td><td>'
                 + ((students[i]["correct"] > 0 || students[i]["incorrect"] > 0) ? Math.round(((students[i]["correct"]) / (students[i]["correct"] + students[i]["incorrect"])) * 100)+"%" :" ")
+                + '</td><td><div class="form-check-inline"><label class="form-check-label">'
+                + '<input type="checkbox" class="form-check-input" onclick="toggleStudentAbsent('
+                + i
+                + ');"'
+                + ((students[i]["absent"]) ? "checked" : "unchecked")
+                + ' id="absentButton'
+                + students[i]["id"]
+                + '"></label></div></td>'
                 + '</td><td><div class="form-check-inline"><label class="form-check-label">'
                 + '<input type="checkbox" class="form-check-input" onclick="toggleStudentEnabled('
                 + i
@@ -383,12 +432,12 @@ function selectStudent (period) {
     if (!userPreferences["allowRepeats"]) {
         do {
             winner = Math.floor(Math.random() *  Math.floor(Object.keys(studentsSelectable).length))
-        }  while ((studentsSelectable[winner]["id"] === lastID || !studentsSelectable[winner]["enabled"]) && j>2);
+        }  while (studentsSelectable[winner]["id"] === lastID || !studentsSelectable[winner]["enabled"] || studentsSelectable[winner]["absent"]);
 
     } else {
         do {
             winner = Math.floor(Math.random() * Math.floor(Object.keys(studentsSelectable).length))
-        } while (!studentsSelectable[winner]["enabled"] && j>2);
+        } while (!studentsSelectable[winner]["enabled"] || studentsSelectable[winner]["absent"]);
         }
     lastID = studentsSelectable[winner]["id"];
     return studentsSelectable[winner]["f_name"] + " " + studentsSelectable[winner]["l_name"];
@@ -425,6 +474,9 @@ function selectStudent (period) {
             </div>
         </div>
 </div>
+    <div class="btn-group fa-pull-right">
+        <button class="btn btn-outline-danger" id="absentButton" type="button" onclick="toggleStudentAbsent(getIndexByID(lastID));">Mark Absent</button>
+    </div>
 <!--    //maybe add a timer with an option to countdown and an optional stopwatch widget alonog with
     //confirmation that the updates have been made or errors thrown here. -->
 <div id="statusBar"></div>
@@ -449,6 +501,7 @@ function selectStudent (period) {
 			<th>Name</th>
             <th>Bias</th>
 			<th>% Correct</th>
+            <th>Absent</th>
 			<th>Enabled</th>
 		</tr>
 		</thead>
