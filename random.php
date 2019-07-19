@@ -344,9 +344,9 @@ function updateTable () {
                     + students[i]["l_name"]
                 + "</td><td>"
                     // add a slider for bias
-//                + '<div class="slidecontainer"><input type="range" min="-10" max="10" value="0" class="slider" id="slide'
-//                +  students[i]["id"]
-//                + '"></div></td>'
+                + '<div class="slidecontainer"><input type="range" min="-10" max="10" value="0" class="slider" id="slide'
+                +  students[i]["id"]
+                + '"></div></td>'
                 + ((students[i]["correct"] > 0 || students[i]["incorrect"] > 0) ? Math.round(((students[i]["correct"]) / (students[i]["correct"] + students[i]["incorrect"])) * 100)+"%" :" ")
                 + '</td><td><div class="form-check-inline"><label class="form-check-label">'
                 + '<input type="checkbox" class="form-check-input" onclick="toggleStudentEnabled('
@@ -447,7 +447,7 @@ function selectStudent (period) {
 		<tr>
 			<th>#</th>
 			<th>Name</th>
- <!--           <th>Bias</th> -->
+            <th>Bias</th>
 			<th>% Correct</th>
 			<th>Enabled</th>
 		</tr>
