@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <?php
+include 'initdb.php';
 //all the SQLite3 queries we will use:
 $load_sql = "SELECT * FROM `STUDENTS`;";
 $prefs_sql = "SELECT * FROM `userPreferences`;";
@@ -10,6 +11,13 @@ $saveEnabled_sql = "UPDATE `STUDENTS` SET `enabled` = :enabled WHERE `id` = :id;
 $updatePrefs_sql = "UPDATE `userPreferences` SET `numPeriods` = :numPeriods, `defaultPeriod` = :defaultPeriod, `allowVolunteers` = :allowVolunteers, `allowRepeats` = :allowRepeats WHERE `id`=1;";
 
 // Check $_POST for self-AJAXing to update who was called
+if (!file_exists('coldcalls.sqlite3')) {
+    $db_init = new PDO("sqlite:coldcalls.sqlite3");
+    $init_queries = explode (";",$init_sql);
+    foreach ($init_queries as $explodedQuery) {$db_init->query($explodedQuery.";");}
+    echo "Initializing database.";
+    }
+
 if (!$_POST) {
     try {
         $db = new PDO("sqlite:coldcalls.sqlite3");
