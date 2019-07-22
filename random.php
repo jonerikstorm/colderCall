@@ -131,7 +131,7 @@ if (getPeriod===99)
     } else {
     currentPeriod = getPeriod;
 }
-let lastID = null;
+let lastID = new Array;
 
 //When the page loads we start with our first person and prepare the table, but hide it.
 $(document).ready(function () {
@@ -193,7 +193,7 @@ $(document).ready(function () {
             }
             updateTable();
         }
-        $("#victim").html(selectStudent(currentPeriod));
+        $("#victim").html(selectStudent2(currentPeriod));
     });
 
     //Hook the action of the incorrect button to pickign a new person, updating their incorrect tally
@@ -412,6 +412,42 @@ function updateTable () {
 }
 
 //add a function that auto biases, trying to get more involvement from those who answer poorly.
+function selectStudent2 (period) {
+    // Pick from the list unless they are disabled, unless we don't want repeats and they are the most recent. Add volunteer to the list if option is enabled.
+    let studentsCopy = JSON.parse(JSON.stringify(students));
+    let studentsSelectable = [{"id":0,"f_name" : "Volunteer",  "l_name": "", "enabled" : false, "period" :period},{"id":1}];
+    studentsCopy.forEach(function (item, index) {index.period === period ? studentsSelectable[index + 1] = index:"";});
+
+    let winner = 1;
+
+    studentsSelectable[0]["coefficient"] = userPreferences["allowVolunteers"] === true;
+    userPreferences["allowRepeats"] === false ? lastID.forEach(function (item, index) {index.id === studentsSelectable[index][id] ? studentsSelectable.index.coefficient = 0: ""}):"";
+
+    for (let i in studentsSelectable) {
+        !studentsSelectable[i]["enabled"] || studentsSelectable[i]["absent"] ? studentsSelectable[i]["coefficient"] = 0 : "";
+    }
+    let selectArray;
+    let k = 0;
+    for (let i in studentsSelectable) {
+        for (let j = 1; j > studentsSelectable[i]["coefficient"]; j++) {
+            k++;
+            selectArray[k] = studentsSelectable[i]["id"];
+
+        }
+    }
+    winner = Math.floor(Math.random() *  Math.floor(Object.keys(selectArray).length));
+
+    if (lastID.length === userPreferences.minimumBetween) {lastID.pop();}
+    lastID.push(studentsSelectable[winner][ID]);
+
+    return studentsSelectable[winner]["f_name"] + userPreferences["includeLastName"] ?  " "
+        + studentsSelectable[winner]["l_name"]: ""
+    + userPreferences["includeLastInitial"] ? " " +studentsSelectable[winner]["l_name"][0]: "";
+
+}
+
+
+
 function selectStudent (period) {
 //Re do this so that it makes an array of the in-play student IDs instead of the array indexes, applies biasing, and then
     //returns the student ID
@@ -439,7 +475,7 @@ function selectStudent (period) {
             winner = Math.floor(Math.random() * Math.floor(Object.keys(studentsSelectable).length))
         } while (!studentsSelectable[winner]["enabled"] || studentsSelectable[winner]["absent"]);
         }
-    lastID = studentsSelectable[winner]["id"];
+    lastID.push(studentsSelectable[winner]["id"]);
     return studentsSelectable[winner]["f_name"] + " " + studentsSelectable[winner]["l_name"];
     }
 </script>

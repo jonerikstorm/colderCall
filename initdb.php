@@ -57,3 +57,5 @@ INSERT INTO userPreferences (
 COMMIT TRANSACTION;
 PRAGMA foreign_keys = on;
 ";
+
+// Upload and receive a CSV file from Google Classroom.
