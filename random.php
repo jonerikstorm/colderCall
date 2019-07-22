@@ -112,7 +112,7 @@ if(isset($_GET['p'])) {
 <script src="static/popper.js"></script>
 <script src="static/bootstrap-4.3.1-dist/js/bootstrap.min.js"></script>
 <link rel="stylesheet" href="static/fontawesome-free-5.9.0-web/css/all.min.css">
-
+<script src="select.js"></script>
 <script>
 "use strict";
 //Try to limit the use of globals. Better yet, eliminate them.
@@ -171,7 +171,7 @@ $(document).ready(function () {
     updatePrefs();
 
     //Pick the first victim on load
-    $("#victim").html(selectStudent(currentPeriod));
+    $("#victim").html(selectStudent2(currentPeriod));
 
     //Hook the action of the correct button to choosing a new person, updating their correct tally
     //Don't try and update the Volunteer's count
@@ -217,12 +217,12 @@ $(document).ready(function () {
         }
 
 
-        $("#victim").html(selectStudent(currentPeriod));
+        $("#victim").html(selectStudent2(currentPeriod));
     });
 
     //The skip button just gets a new student
     $("#skipButton").click(function () {
-        $("#victim").html(selectStudent(currentPeriod));
+        $("#victim").html(selectStudent2(currentPeriod));
     });
 
     //The table button toggles the appearance of the student table
@@ -412,72 +412,7 @@ function updateTable () {
 }
 
 //add a function that auto biases, trying to get more involvement from those who answer poorly.
-function selectStudent2 (period) {
-    // Pick from the list unless they are disabled, unless we don't want repeats and they are the most recent. Add volunteer to the list if option is enabled.
-    let studentsCopy = JSON.parse(JSON.stringify(students));
-    let studentsSelectable = [{"id":0,"f_name" : "Volunteer",  "l_name": "", "enabled" : false, "period" :period},{"id":1}];
-    studentsCopy.forEach(function (item, index) {index.period === period ? studentsSelectable[index + 1] = index:"";});
 
-    let winner = 1;
-
-    studentsSelectable[0]["coefficient"] = userPreferences["allowVolunteers"] === true;
-    userPreferences["allowRepeats"] === false ? lastID.forEach(function (item, index) {index.id === studentsSelectable[index][id] ? studentsSelectable.index.coefficient = 0: ""}):"";
-
-    for (let i in studentsSelectable) {
-        !studentsSelectable[i]["enabled"] || studentsSelectable[i]["absent"] ? studentsSelectable[i]["coefficient"] = 0 : "";
-    }
-    let selectArray;
-    let k = 0;
-    for (let i in studentsSelectable) {
-        for (let j = 1; j > studentsSelectable[i]["coefficient"]; j++) {
-            k++;
-            selectArray[k] = studentsSelectable[i]["id"];
-
-        }
-    }
-    winner = Math.floor(Math.random() *  Math.floor(Object.keys(selectArray).length));
-
-    if (lastID.length === userPreferences.minimumBetween) {lastID.pop();}
-    lastID.push(studentsSelectable[winner][ID]);
-
-    return studentsSelectable[winner]["f_name"] + userPreferences["includeLastName"] ?  " "
-        + studentsSelectable[winner]["l_name"]: ""
-    + userPreferences["includeLastInitial"] ? " " +studentsSelectable[winner]["l_name"][0]: "";
-
-}
-
-
-
-function selectStudent (period) {
-//Re do this so that it makes an array of the in-play student IDs instead of the array indexes, applies biasing, and then
-    //returns the student ID
-    // Pick from the list unless they are disabled, unless we don't want repeats and they are the most recent. Add volunteer to the list if option is enabled.
-    let studentsCopy = JSON.parse(JSON.stringify(students));
-    let studentsSelectable = [{"id":0,"f_name" : "Volunteer",  "l_name": "", "enabled" : false, "period" :period},{"id":1}];
-    let j=1;
-    for (let i in studentsCopy)
-    {
-        if (studentsCopy[i]["period"]===period) {
-            studentsSelectable[j] = studentsCopy[i];
-            j++;
-        }
-    }
-    let winner = 1;
-
-    studentsSelectable[0]["enabled"] = userPreferences["allowVolunteers"] === true;
-    if (!userPreferences["allowRepeats"]) {
-        do {
-            winner = Math.floor(Math.random() *  Math.floor(Object.keys(studentsSelectable).length))
-        }  while (studentsSelectable[winner]["id"] === lastID || !studentsSelectable[winner]["enabled"] || studentsSelectable[winner]["absent"]);
-
-    } else {
-        do {
-            winner = Math.floor(Math.random() * Math.floor(Object.keys(studentsSelectable).length))
-        } while (!studentsSelectable[winner]["enabled"] || studentsSelectable[winner]["absent"]);
-        }
-    lastID.push(studentsSelectable[winner]["id"]);
-    return studentsSelectable[winner]["f_name"] + " " + studentsSelectable[winner]["l_name"];
-    }
 </script>
 </head>
 <body>
