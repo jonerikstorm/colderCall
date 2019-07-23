@@ -76,14 +76,15 @@ if (!$_POST) {
             break;
         case "updateBias":
             $db6 = new PDO("sqlite:coldcalls.sqlite3");
-            $db6->prepare($updateBias_sql)->execute(['coefficent' => $_POST['coefficient'], 'id' => $_POST['id']]);
+            $db6->prepare($updateBias_sql)->execute(['coefficient' => $_POST['coefficient'], 'id' => $_POST['id']]);
             exit;
             break;
     }
 }
 // Use $_GET to specify period so we can bookmark it 
-if(isset($_GET['p'])) {
+if(isset($_GET['p']) && $_GET['p'] >= $userPrefs->numPeriods) {
 
+    /*
     switch ($_GET['p']) {
 
         case 1:
@@ -104,8 +105,18 @@ if(isset($_GET['p'])) {
         case 6:
             $getPeriod = 6;
             break;
+        case 7:
+            $getPeriod = 7;
+            break;
+        case 8:
+            $getPeriod = 8;
+            break;
+        case 9:
+            $getPeriod = 9;
+        break;
     }
-
+*/
+    $getPeriod = $_GET['p'];
 }  else {$getPeriod = 99;}
 ?>
 <html lang="english">
@@ -375,15 +386,15 @@ function getIndexByID(idno)
 
 function updateBias(index)
 {
-   students[index]["coefficient"] = $("#slide".index).("value");
+   students[index]["coefficient"] = $('#slide'+index).val();
     $.post("random.php",
         {
             action: "updateBias",
             id: students[index]["id"],
-            absent: students[index]["coefficient"]
+            coefficient: students[index]["coefficient"]
         }
     );
-    updateTable();
+  //  updateTable();
 }
 
 
@@ -428,6 +439,7 @@ function updateTable () {
                 + students[i]["id"]
                 + '"></label></div></td></tr>'
             );
+            $('#slide'+i).val(students[i]["coefficient"]);
 
         }
     }
