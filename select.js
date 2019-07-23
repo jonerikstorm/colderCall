@@ -9,7 +9,7 @@ function selectStudent2 (period) {
     studentsSelectable[0]["coefficient"] = userPreferences["allowVolunteers"] === true;
 
     // Do we stil even need this pref? allowRepeats false = minimumBetween 0
-    userPreferences["allowRepeats"] === false ? lastID.forEach(function (item, index, array) {item.id === studentsSelectable[index]["id"] ? studentsSelectable[index]["coefficient"] = 0: ""}):"";
+    userPreferences["allowRepeats"] === false ? lastID.forEach(function (item, index, array) {item === studentsSelectable[index]["id"] ? studentsSelectable[index]["coefficient"] = 0: ""}):"";
 
     // For this run only, turn this student's coefficient to zero if absent or disabled.
     for (let i in studentsSelectable) {
@@ -41,7 +41,7 @@ function selectStudent2 (period) {
             if (userPreferences.includeLastInitial) {
                 output += " ";
                 output += studentsSelectable[i]["l_name"][0];
-                output += ".";
+                i===0 ? " ":  output += ".";
                 }
             return output;
         }

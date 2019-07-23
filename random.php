@@ -104,7 +104,7 @@ if(isset($_GET['p'])) {
 ?>
 <html lang="english">
 <head>
-    <title>Coldcalls</title>
+    <title>colderCalls</title>
 <meta charset="utf-8">
 <meta content="width=device-width, initial-scale=1" name="viewport">
 <link href="static/bootstrap-4.3.1-dist/css/bootstrap.min.css" rel="stylesheet">
