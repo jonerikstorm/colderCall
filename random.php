@@ -8,6 +8,7 @@ $answer_sql = "INSERT INTO `ANSWERS` (`timestamp`,`student_id`,`correct`) VALUES
 $incrementCorrect_sql = "UPDATE `STUDENTS` SET `correct` = :correcto WHERE `id`=:id;";
 $incrementIncorrect_sql = "UPDATE `STUDENTS` SET `incorrect` = :incorrecto WHERE `id` = :id;";
 $saveEnabled_sql = "UPDATE `STUDENTS` SET `enabled` = :enabled WHERE `id` = :id;";
+$updateBias_sql = "UPDATE `STUDENTS` SET `coefficient` = :coefficient WHERE `id` = :id;";
 $saveAbsent_sql = "UPDATE `STUDENTS` SET `absent` = :absent, `absentDate` = :date WHERE `id` = :id;";
 $updatePrefs_sql = "UPDATE `userPreferences` SET `numPeriods` = :numPeriods, `defaultPeriod` = :defaultPeriod, `allowVolunteers` = :allowVolunteers, `allowRepeats` = :allowRepeats WHERE `id`=1;";
 
@@ -71,6 +72,11 @@ if (!$_POST) {
         case "updatePrefs":
             $db4 = new PDO("sqlite:coldcalls.sqlite3");
             $db4->prepare($updatePrefs_sql)->execute(['numPeriods' => $_POST['numPeriods'],'defaultPeriod' => $_POST['defaultPeriod'], 'allowVolunteers' => $_POST['allowVolunteers'], 'allowRepeats' => $_POST['allowRepeats']]);
+            exit;
+            break;
+        case "updateBias":
+            $db6 = new PDO("sqlite:coldcalls.sqlite3");
+            $db6->prepare($updateBias_sql)->execute(['coefficent' => $_POST['coefficient'], 'id' => $_POST['id']]);
             exit;
             break;
     }
@@ -367,6 +373,20 @@ function getIndexByID(idno)
     }
 }
 
+function updateBias(index)
+{
+   students[index]["coefficient"] = $("#slide".index).("value");
+    $.post("random.php",
+        {
+            action: "updateBias",
+            id: students[index]["id"],
+            absent: students[index]["coefficient"]
+        }
+    );
+    updateTable();
+}
+
+
 function getIDbyIndexBy(idxno)
 {
     for (i in students) {
@@ -385,8 +405,10 @@ function updateTable () {
                     + students[i]["l_name"]
                 + "</td><td>"
                     // add a slider for bias
-                + '<div class="slidecontainer"><input type="range" min="-10" max="10" value="0" class="slider" id="slide'
-                +  students[i]["id"]
+                + '<div class="slidecontainer"><input type="range" onchange="updateBias('
+                + i
+                + ');" min="0" max="10" value="1" class="slider" id="slide'
+                +  i
                 + '"></div></td><td>'
                 + ((students[i]["correct"] > 0 || students[i]["incorrect"] > 0) ? Math.round(((students[i]["correct"]) / (students[i]["correct"] + students[i]["incorrect"])) * 100)+"%" :" ")
                 + '</td><td><div class="form-check-inline"><label class="form-check-label">'
