@@ -264,8 +264,11 @@ function updatePrefs () {
 		+ ((userPreferences["allowRepeats"])? "checked":"unchecked")
 		+' id="allowRepeatsCheckBox"></label></div></td></tr>'
         +'<tr><td>Number of Periods</td><td><div class="form-group">'
-    +'<select class="form-control-sm" id="numPeriodSelector" onchange="updateNumPeriods();"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select></div>'
-    +'</td></tr>');
+        +'<select class="form-control-sm" id="numPeriodSelector" onchange="updateNumPeriods();"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select></div>'
+        +'</td></tr>'
+        +'<tr><td>Minimum calls before repeat</td>'
+        +'<td><div class="slidecontainer"><input type="range" onchange="updateMin min="-1" max="30" value="1" class="slider" id="betweenSlide"></div></td><td>'
+    );
 	$("#defaultPeriodSelector").val(userPreferences["defaultPeriod"]);
     $("#numPeriodSelector").val(userPreferences["numPeriods"]);
 }
@@ -346,7 +349,7 @@ function toggleStudentAbsent(IDnumber) {
 
 function getIndexByID(idno)
 {
-    for (i in students) {
+    for (let i in students) {
         if (students[i]["id"] === idno) { return i;}
     }
 }
@@ -367,7 +370,7 @@ function updateBias(index)
 
 function getIDbyIndexBy(idxno)
 {
-    for (i in students) {
+    for (let i in students) {
         if (idxno === students[i]["id"]) { return students[i]["id"];}
     }
 }
