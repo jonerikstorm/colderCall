@@ -11,15 +11,15 @@ function selectStudent2 (period) {
     // Do we stil even need this pref? allowRepeats false = minimumBetween 0
     if(userPreferences["allowRepeats"] === false) {
 
-        lastID.forEach(function (item, index, array) {
+        for (let j in lastID) {
             for (let i in studentsSelectable) {
 
-                if (item === studentsSelectable[i]["id"]) {
+                if (lastID[j] === studentsSelectable[i]["id"]) {
 
                     studentsSelectable[i]["coefficient"] = 0;
                 }
             }
-        });
+        }
     }
     // For this run only, turn this student's coefficient to zero if absent or disabled.
     for (let i in studentsSelectable) {

@@ -162,7 +162,7 @@ $(document).ready(function () {
     $("#correct").click(function () {
         if (lastID !== 0) {
             for (let i in students) {
-                if (students[i]["id"] === lastID) {
+                if (students[i]["id"] === lastID[Object.keys(lastID).length - 1]) {
                     students[i]["correct"]++;
                     $.post("random.php",
                         {
@@ -185,7 +185,7 @@ $(document).ready(function () {
     $("#incorrect").click(function () {
         if (lastID !== 0) {
             for (let i in students) {
-                if (students[i]["id"] === lastID) {
+                if (students[i]["id"] === lastID[Object.keys(lastID).length - 1]) {
                     students[i]["incorrect"]++;
                     $.post("random.php",
                         {
