@@ -9,11 +9,23 @@ function selectStudent2 (period) {
     studentsSelectable[0]["coefficient"] = userPreferences["allowVolunteers"] === true;
 
     // Do we stil even need this pref? allowRepeats false = minimumBetween 0
-    userPreferences["allowRepeats"] === false ? lastID.forEach(function (item, index, array) {item === studentsSelectable[index]["id"] ? studentsSelectable[index]["coefficient"] = 0: ""}):"";
+    if(userPreferences["allowRepeats"] === false) {
 
+        lastID.forEach(function (item, index, array) {
+            for (let i in studentsSelectable) {
+
+                if (item === studentsSelectable[i]["id"]) {
+
+                    studentsSelectable[i]["coefficient"] = 0;
+                }
+            }
+        });
+    }
     // For this run only, turn this student's coefficient to zero if absent or disabled.
     for (let i in studentsSelectable) {
-        !studentsSelectable[i]["enabled"] || studentsSelectable[i]["absent"] ? studentsSelectable[i]["coefficient"] = 0 : "";
+        if(!studentsSelectable[i]["enabled"] || studentsSelectable[i]["absent"]) {
+            studentsSelectable[i]["coefficient"] = 0;
+        }
     }
 
     // Instead of using the indexes, we'll go by ID so it's easier to copy to lastID
@@ -27,26 +39,33 @@ function selectStudent2 (period) {
 
         }
     }
-    let winner = Math.floor(Math.random() * Math.floor(Object.keys(selectArray).length));
+    let winner = selectArray[Math.floor(Math.random() * Math.floor(Object.keys(selectArray).length))];
+
     //do we want this to persist? Maybe in $_SESSION?
     while (lastID.length >= userPreferences["minimumBetween"])
         {lastID.pop();}
+
    lastID.push(winner);
+    $("#statusBar").html(lastID);
     for (let i=0;i < Object.keys(studentsSelectable).length; i++) {
         if (winner === studentsSelectable[i]["id"]) {
             let output =  studentsSelectable[i]["f_name"];
             if (userPreferences.includeLastName) {
                 output += " ";
-                output += studentsSelectable[i]["l_name"];}
+                output += studentsSelectable[i]["l_name"];
+            }
             if (userPreferences.includeLastInitial) {
                 output += " ";
                 output += studentsSelectable[i]["l_name"][0];
-                i===0 ? " ":  output += ".";
+                if(i!==0) {
+                    output +=".";
                 }
+            }
             return output;
+
         }
     }
 
-throw("Bummer.");
+//throw("Bummer.");
 
 }

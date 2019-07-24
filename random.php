@@ -81,47 +81,14 @@ if (!$_POST) {
             break;
     }
 }
-// Use $_GET to specify period so we can bookmark it 
-if(isset($_GET['p']) && $_GET['p'] >= $userPrefs->numPeriods) {
-
-    /*
-    switch ($_GET['p']) {
-
-        case 1:
-            $getPeriod = 1;
-            break;
-        case 2:
-            $getPeriod = 2;
-            break;
-        case 3:
-            $getPeriod = 3;
-            break;
-        case 4:
-            $getPeriod = 4;
-            break;
-        case 5:
-            $getPeriod = 5;
-            break;
-        case 6:
-            $getPeriod = 6;
-            break;
-        case 7:
-            $getPeriod = 7;
-            break;
-        case 8:
-            $getPeriod = 8;
-            break;
-        case 9:
-            $getPeriod = 9;
-        break;
-    }
-*/
+// Use $_GET to specify period so we can bookmark it
+if(isset($_GET['p']) && ($_GET['p'] <= $userPrefs[0]['numPeriods'])) {
     $getPeriod = $_GET['p'];
 }  else {$getPeriod = 99;}
 ?>
-<html lang="english">
+<html lang="en-us">
 <head>
-    <title>colderCalls</title>
+    <title>colderCalls 0.2</title>
 <meta charset="utf-8">
 <meta content="width=device-width, initial-scale=1" name="viewport">
 <link href="static/bootstrap-4.3.1-dist/css/bootstrap.min.css" rel="stylesheet">
