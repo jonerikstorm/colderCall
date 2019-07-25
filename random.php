@@ -10,7 +10,7 @@ $incrementIncorrect_sql = "UPDATE `STUDENTS` SET `incorrect` = :incorrecto WHERE
 $saveEnabled_sql = "UPDATE `STUDENTS` SET `enabled` = :enabled WHERE `id` = :id;";
 $updateBias_sql = "UPDATE `STUDENTS` SET `coefficient` = :coefficient WHERE `id` = :id;";
 $saveAbsent_sql = "UPDATE `STUDENTS` SET `absent` = :absent, `absentDate` = :date WHERE `id` = :id;";
-$updatePrefs_sql = "UPDATE `userPreferences` SET `numPeriods` = :numPeriods, `defaultPeriod` = :defaultPeriod, `allowVolunteers` = :allowVolunteers, `allowRepeats` = :allowRepeats WHERE `id`=1;";
+$updatePrefs_sql = "UPDATE `userPreferences` SET `numPeriods` = :numPeriods, `defaultPeriod` = :defaultPeriod, `allowVolunteers` = :allowVolunteers, `allowRepeats` = :allowRepeats, `minimumBetween`= :minimumBetween, `includeLastName`= :includeLastname, `includeLastInitial` =:includeLastInitial;";
 
 // Check $_POST for self-AJAXing to update who was called
 if (!file_exists('coldcalls.sqlite3')) {
@@ -71,7 +71,7 @@ if (!$_POST) {
             break;
         case "updatePrefs":
             $db4 = new PDO("sqlite:coldcalls.sqlite3");
-            $db4->prepare($updatePrefs_sql)->execute(['numPeriods' => $_POST['numPeriods'],'defaultPeriod' => $_POST['defaultPeriod'], 'allowVolunteers' => $_POST['allowVolunteers'], 'allowRepeats' => $_POST['allowRepeats']]);
+            $db4->prepare($updatePrefs_sql)->execute(['minimumBetween' => $_POST['minimumBetween'],'includeLastName' => $_POST['includeLastName'],'includeLastInitial' => $_POST['includeLastInitial'], 'numPeriods' => $_POST['numPeriods'],'defaultPeriod' => $_POST['defaultPeriod'], 'allowVolunteers' => $_POST['allowVolunteers'], 'allowRepeats' => $_POST['allowRepeats']]);
             exit;
             break;
         case "updateBias":
@@ -104,7 +104,7 @@ if(isset($_GET['p']) && ($_GET['p'] <= $userPrefs[0]['numPeriods'])) {
 let students = JSON.parse('<?php echo json_encode($students,JSON_NUMERIC_CHECK ); ?>',(k, v) => v === "true" ? true : v === "false" ? false : v);
 //reset absences
 let userPreferences = JSON.parse('<?php echo json_encode($userPrefs[0], JSON_NUMERIC_CHECK); ?>',(k, v) => v === "true" ? true : v === "false" ? false : v);
-let currentPeriod;
+var currentPeriod;
 
 
 //Set the globals; a GET overrides user default.
@@ -115,7 +115,7 @@ if (getPeriod===99)
     } else {
     currentPeriod = getPeriod;
 }
-let lastID = new Array;
+var lastID = new Array;
 
 //When the page loads we start with our first person and prepare the table, but hide it.
 $(document).ready(function () {
@@ -260,18 +260,46 @@ function updatePrefs () {
                 +'</td></tr><tr><td>Include Volunteer<td><div class="form-check-inline"><label class="form-check-label"><input type="checkbox" onclick="toggleVolunteers();" class="form-check-input"'
 		+ ((userPreferences["allowVolunteers"])? "checked":"unchecked")
 		+' id="allowVolunteersCheckBox"></label></div></td></tr>'
-                +'</td></tr><tr><td>Allow Repeats<td><div class="form-check-inline"><label class="form-check-label"><input type="checkbox" onclick="toggleRepeats();" class="form-check-input"'
-		+ ((userPreferences["allowRepeats"])? "checked":"unchecked")
-		+' id="allowRepeatsCheckBox"></label></div></td></tr>'
         +'<tr><td>Number of Periods</td><td><div class="form-group">'
         +'<select class="form-control-sm" id="numPeriodSelector" onchange="updateNumPeriods();"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select></div>'
         +'</td></tr>'
         +'<tr><td>Minimum calls before repeat</td>'
-        +'<td><div class="slidecontainer"><input type="range" onchange="updateMin min="-1" max="30" value="1" class="slider" id="betweenSlide"></div></td><td>'
+        +'<td><div class="slidecontainer"><input type="range" oninput="updateMinText();" onchange="updateMin();" min="0" max="11" value="1" class="slider" id="betweenSlide"></div>'
+        +'<div id="minimumBetweenDisplay"></div></td></tr>'
     );
+	$("#betweenSlide").val(userPreferences["minimumBetween"]);
+	$("#minimumBetweenDisplay").text($("#betweenSlide").val());
 	$("#defaultPeriodSelector").val(userPreferences["defaultPeriod"]);
     $("#numPeriodSelector").val(userPreferences["numPeriods"]);
 }
+
+function updateMinText()
+{
+    let value = $("#betweenSlide").val();
+    $("#minimumBetweenDisplay").text(value);
+    if (value === "0") { $("#minimumBetweenDisplay").empty(); $("#minimumBetweenDisplay").text("Repeats Allowed.");}
+    if (value === "11") { $("#minimumBetweenDisplay").empty(); $("#minimumBetweenDisplay").text("Full Class Before Repeat.");}
+
+}
+
+function updateMin()
+{
+
+    userPreferences["minimumBetween"] = $("#defaultPeriodSelector").val();
+    $.post("random.php",
+        {
+            action: "updatePrefs",
+            defaultPeriod: userPreferences["defaultPeriod"],
+            allowVolunteers: userPreferences["allowVolunteers"],
+            allowRepeats: userPreferences["allowRepeats"],
+            numPeriods: userPreferences["numPeriods"],
+            minimumBetween: userPreferences["minimumBetween"],
+            includeLastName: userPreferences["includeLastName"],
+            includeLastInitial: userPreferences["includeLastInitial"]
+        }
+    );
+}
+
 
 function updateNumPeriods()
 {
@@ -282,7 +310,10 @@ function updateNumPeriods()
             defaultPeriod: userPreferences["defaultPeriod"],
             allowVolunteers: userPreferences["allowVolunteers"],
             allowRepeats: userPreferences["allowRepeats"],
-            numPeriods: userPreferences["numPeriods"]
+            numPeriods: userPreferences["numPeriods"],
+            minimumBetween: userPreferences["minimumBetween"],
+            includeLastName: userPreferences["includeLastName"],
+            includeLastInitial: userPreferences["includeLastInitial"]
         }
     );
     periodMenuDropDownf();
@@ -296,7 +327,11 @@ function updatePeriod()
             action: "updatePrefs",
             defaultPeriod: userPreferences["defaultPeriod"],
             allowVolunteers: userPreferences["allowVolunteers"],
-            allowRepeats: userPreferences["allowRepeats"]
+            allowRepeats: userPreferences["allowRepeats"],
+            numPeriods: userPreferences["numPeriods"],
+            minimumBetween: userPreferences["minimumBetween"],
+            includeLastName: userPreferences["includeLastName"],
+            includeLastInitial: userPreferences["includeLastInitial"]
         }
     );
 }
@@ -310,7 +345,11 @@ function toggleVolunteers()
             action: "updatePrefs",
             defaultPeriod: userPreferences["defaultPeriod"],
             allowVolunteers: userPreferences["allowVolunteers"],
-            allowRepeats: userPreferences["allowRepeats"]
+            allowRepeats: userPreferences["allowRepeats"],
+            numPeriods: userPreferences["numPeriods"],
+            minimumBetween: userPreferences["minimumBetween"],
+            includeLastName: userPreferences["includeLastName"],
+            includeLastInitial: userPreferences["includeLastInitial"]
         }
     );
 }
@@ -323,7 +362,11 @@ function toggleRepeats()
             action: "updatePrefs",
             defaultPeriod: userPreferences["defaultPeriod"],
             allowVolunteers: userPreferences["allowVolunteers"],
-            allowRepeats: userPreferences["allowRepeats"]
+            allowRepeats: userPreferences["allowRepeats"],
+            numPeriods: userPreferences["numPeriods"],
+            minimumBetween: userPreferences["minimumBetween"],
+            includeLastName: userPreferences["includeLastName"],
+            includeLastInitial: userPreferences["includeLastInitial"]
         }
     );
 }
@@ -450,7 +493,7 @@ function updateTable () {
         </div>
 </div>
     <div class="btn-group fa-pull-right">
-        <button class="btn btn-outline-danger" id="absentButton" type="button" onclick="toggleStudentAbsent(getIndexByID(lastID));">Mark Absent</button>
+        <button class="btn btn-outline-danger" id="absentButton" type="button" onclick="toggleStudentAbsent(getIndexByID(lastID[Object.keys(lastID).length() - 1]));">Mark Absent</button>
     </div>
 <!--    //maybe add a timer with an option to countdown and an optional stopwatch widget alonog with
     //confirmation that the updates have been made or errors thrown here. -->
@@ -459,8 +502,8 @@ function updateTable () {
         <table class="table table-hover">
                 <thead class="thead-light">
                 <tr>
-                        <th>Preference</th>
-                        <th>Enabled</th>
+                        <th>Preference Name</th>
+                        <th>Setting</th>
                 </tr>
                 </thead>
                 <tbody id="preferencesTableItems">

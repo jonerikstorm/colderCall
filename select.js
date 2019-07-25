@@ -1,37 +1,47 @@
 function selectStudent2 (period) {
-    // Pick from the list unless they are disabled, unless we don't want repeats and they are the most recent. Add volunteer to the list if option is enabled.
+    // Since we don't want to write to the original list and we need to keep it global, we have to use this hack to make a copy.
     let studentsCopy = JSON.parse(JSON.stringify(students));
-    let studentsSelectable = [{"id":0,"f_name" : "Volunteer",  "l_name": " ", "enabled" : false, "period" :period, "coefficient": 1},{"id":1}];
-    studentsCopy.forEach(function (item, index, array) {item.period === period ? studentsSelectable[index + 1] = item : "";});
 
+    //Volunteer is a special case that we add in manually.
+    let volunteer = {"id":0,"f_name" : "Volunteer",  "l_name": " ", "enabled" : true, "period" :period, "coefficient": 1};
 
-    // How will we adjust the volunteer's coefficent? by period?
-    studentsSelectable[0]["coefficient"] = userPreferences["allowVolunteers"] === true;
+    //We just want the people in this period.
+    let studentsSelectable = studentsCopy.filter((value,index,array) => {return (array[index]["period"] === period && array[index]["enabled"] && !array[index]["absent"]);});
 
-    // Do we stil even need this pref? allowRepeats false = minimumBetween 0
-    if(userPreferences["allowRepeats"] === false) {
+    //Stick Volunteer at the beginning if enabled
+    if (userPreferences["allowVolunteers"]) {studentsSelectable.unshift(volunteer);}
 
-        for (let j in lastID) {
-            for (let i in studentsSelectable) {
+    //Pop enough off the lastID list (preferences can change)
+    let present = Object.keys(studentsSelectable).length;
+    $("#statusBar").text("Total Present: " + present);
 
-                if (lastID[j] === studentsSelectable[i]["id"]) {
+    //do we want this to persist? Maybe in $_SESSION?
+    //This is the biggest the lastID list can be
+    while (lastID.length >= present) {
+            lastID.pop();
+    }
 
-                    studentsSelectable[i]["coefficient"] = 0;
-                }
+    //If the user preference goes lower, we can go lower.
+    while (lastID.length >= userPreferences["minimumBetween"]) {
+            lastID.pop();
+        }
+
+    //People in the lastID, less the last one we just popped off, are out.
+    //This has to go after the stuff above because those people will not be included again.
+    //These people are only temporarily out so we need to adjust the length of lastID accordingly
+    for (let i in lastID) {
+        for (let j in studentsSelectable) {
+            if (studentsSelectable[j]["id"] === lastID[i]) {
+                studentsSelectable.slice(j, 1);
+            }
             }
         }
-    }
-    // For this run only, turn this student's coefficient to zero if absent or disabled.
-    for (let i in studentsSelectable) {
-        if(!studentsSelectable[i]["enabled"] || studentsSelectable[i]["absent"]) {
-            studentsSelectable[i]["coefficient"] = 0;
-        }
-    }
 
     // Instead of using the indexes, we'll go by ID so it's easier to copy to lastID
+    // This should create an array with the ID present one time for each coefficient
     let selectArray = new Array();
     let k = 0;
-    for (let i in studentsSelectable) {
+    for (let i = 0; i < Object.keys(studentsSelectable).length; i++) {
         for (let j = 0; j < studentsSelectable[i]["coefficient"]; j++) {
 
             selectArray[k] = studentsSelectable[i]["id"];
@@ -39,14 +49,15 @@ function selectStudent2 (period) {
 
         }
     }
-    let winner = selectArray[Math.floor(Math.random() * Math.floor(Object.keys(selectArray).length))];
 
-    //do we want this to persist? Maybe in $_SESSION?
-    while (lastID.length >= userPreferences["minimumBetween"])
-        {lastID.pop();}
+    // Alternate technique
+    //var points = [40, 100, 1, 5, 25, 10];
+    //points.sort(function(a, b){return 0.5 - Math.random()});
 
-   lastID.push(winner);
-    $("#statusBar").html(lastID);
+    let winner = selectArray[Math.floor(Math.random() * selectArray.length)];
+
+   lastID.unshift(winner);
+    $("#statusBar").append("—Last IDs: "+lastID);
     for (let i=0;i < Object.keys(studentsSelectable).length; i++) {
         if (winner === studentsSelectable[i]["id"]) {
             let output =  studentsSelectable[i]["f_name"];
