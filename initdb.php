@@ -1,6 +1,13 @@
 <?php
-$init_sql = "PRAGMA foreign_keys = off;
+$init_sql = "--
+-- File generated with SQLiteStudio v3.2.1 on Thu Jul 25 13:26:42 2019
+--
+-- Text encoding used: UTF-8
+--
+PRAGMA foreign_keys = off;
 BEGIN TRANSACTION;
+
+-- Table: ANSWERS
 CREATE TABLE ANSWERS (
     id         INTEGER  PRIMARY KEY AUTOINCREMENT
                         NOT NULL,
@@ -9,6 +16,9 @@ CREATE TABLE ANSWERS (
     correct    BOOLEAN  NOT NULL,
     timestamp  DATETIME NOT NULL
 );
+
+
+-- Table: STUDENTS
 CREATE TABLE STUDENTS (
     id          INT     PRIMARY KEY
                         UNIQUE
@@ -31,6 +41,9 @@ CREATE TABLE STUDENTS (
                         CHECK (coefficient >= 0 AND 
                                coefficient <= 10) 
 );
+
+
+-- Table: userPreferences
 CREATE TABLE userPreferences (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     defaultPeriod   INT     CHECK (defaultPeriod > 0 AND 
@@ -46,11 +59,13 @@ CREATE TABLE userPreferences (
     minimumBetween  INT     CHECK (minimumBetween >= -1) 
                             DEFAULT (1) 
                             NOT NULL,
-    includeLastName BOOLEAN NOT NULL
-                            DEFAULT true,
-    includeLastInitial BOOLEAN NOT NULL
-                            DEFAULT false
+    nameSelection   INT     CHECK (nameSelection = 1 OR 
+                                   nameSelection = 3 OR 
+                                   nameSelection = 5) 
+                            NOT NULL
+                            DEFAULT (3) 
 );
+
 
 COMMIT TRANSACTION;
 PRAGMA foreign_keys = on;

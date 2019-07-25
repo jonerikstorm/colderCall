@@ -249,7 +249,7 @@ function updatePrefs () {
         + '<tr><td>Name Format</td><td><div onclick="updateNameSelection();"><div class="form-check-inline"><label class="form-check-label"><input type="radio" class="form-check-input" name="nameSelectRadios" value=3>First & Last Name</label></div><div class="form-check-inline"><label class="form-check-label">'
         + '<input type="radio" class="form-check-input" name="nameSelectRadios" value=5>First Name & Last Initial</label></div><div class="form-check-inline disabled"><label class="form-check-label"><input type="radio" class="form-check-input" name="nameSelectRadios" value=1>First Name Only</label></div></div></td></tr>'
     );
-    $('input[name=nameSelectRadios]:checked').val(userPreferences["nameSelection"]);
+    $('input[name=nameSelectRadios][value='+userPreferences.nameSelection+']').prop("checked",true);
 	$("#betweenSlide").val(userPreferences["minimumBetween"]);
 	$("#minimumBetweenDisplay").text($("#betweenSlide").val());
 	$("#defaultPeriodSelector").val(userPreferences["defaultPeriod"]);
