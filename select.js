@@ -15,24 +15,17 @@ function selectStudent2 (period) {
     let present = Object.keys(studentsSelectable).length;
     $("#statusBar").text("Total Present: " + present);
 
-    //do we want this to persist? Maybe in $_SESSION?
-    //This is the biggest the lastID list can be
-    while (lastID.length >= present) {
-            lastID.pop();
-    }
 
-    //If the user preference goes lower, we can go lower.
-    while (lastID.length >= userPreferences["minimumBetween"]) {
-            lastID.pop();
-        }
 
     //People in the lastID, less the last one we just popped off, are out.
     //This has to go after the stuff above because those people will not be included again.
     //These people are only temporarily out so we need to adjust the length of lastID accordingly
-    for (let i in lastID) {
-        for (let j in studentsSelectable) {
+    for (let i=0; i < Object.keys(lastID).length; i++) {
+        for (let j = Object.keys(studentsSelectable).length - 1; j > -1;j--) {
+            console.log(j);
             if (studentsSelectable[j]["id"] === lastID[i]) {
-                studentsSelectable.slice(j, 1);
+                studentsSelectable.splice(j, 1);
+
             }
             }
         }
@@ -56,7 +49,18 @@ function selectStudent2 (period) {
 
     let winner = selectArray[Math.floor(Math.random() * selectArray.length)];
 
-   lastID.unshift(winner);
+
+    //do we want this to persist? Maybe in $_SESSION?
+    //This is the biggest the lastID list can be
+    while (lastID.length >= present) {
+        lastID.pop();
+    }
+
+    //If the user preference goes lower, we can go lower.
+    while (lastID.length >= userPreferences["minimumBetween"]) {
+        lastID.pop();
+    }
+    lastID.unshift(winner);
     $("#statusBar").append("—Last IDs: "+lastID);
     for (let i=0;i < Object.keys(studentsSelectable).length; i++) {
         if (winner === studentsSelectable[i]["id"]) {
