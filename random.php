@@ -8,7 +8,9 @@ $answer_sql = "INSERT INTO `ANSWERS` (`timestamp`,`student_id`,`correct`) VALUES
 $incrementCorrect_sql = "UPDATE `STUDENTS` SET `correct` = :correcto WHERE `id`=:id;";
 $incrementIncorrect_sql = "UPDATE `STUDENTS` SET `incorrect` = :incorrecto WHERE `id` = :id;";
 $saveEnabled_sql = "UPDATE `STUDENTS` SET `enabled` = :enabled WHERE `id` = :id;";
-$updatePrefs_sql = "UPDATE `userPreferences` SET `numPeriods` = :numPeriods, `defaultPeriod` = :defaultPeriod, `allowVolunteers` = :allowVolunteers, `allowRepeats` = :allowRepeats WHERE `id`=1;";
+$updateBias_sql = "UPDATE `STUDENTS` SET `coefficient` = :coefficient WHERE `id` = :id;";
+$saveAbsent_sql = "UPDATE `STUDENTS` SET `absent` = :absent, `absentDate` = :date WHERE `id` = :id;";
+$updatePrefs_sql = "UPDATE `userPreferences` SET `numPeriods` = :numPeriods, `defaultPeriod` = :defaultPeriod, `allowVolunteers` = :allowVolunteers, `allowRepeats` = :allowRepeats, `minimumBetween`= :minimumBetween, `nameSelection` = :nameSelection;";
 
 // Check $_POST for self-AJAXing to update who was called
 if (!file_exists('coldcalls.sqlite3')) {
@@ -18,6 +20,9 @@ if (!file_exists('coldcalls.sqlite3')) {
     echo "Initializing database.";
     }
 
+$timeZone = new DateTimeZone('America/Los_Angeles');
+$dt = new DateTime();
+$dt->setTimezone($timeZone);
 if (!$_POST) {
     try {
         $db = new PDO("sqlite:coldcalls.sqlite3");
@@ -28,13 +33,17 @@ if (!$_POST) {
         exit;
     }
 	$students =  $db->query($load_sql)->fetchAll(PDO::FETCH_OBJ);
+    foreach ($students as $student) {
+        if ($student->absentDate != $dt->format('Y-m-d')) {
+            $student->absent = false; $student->absentDate = null;
+            $db->prepare("UPDATE `STUDENTS` SET absent = 'false', absentDate = null where `id` = :id;")->execute(['id' => $student->id]);
+         }
+    }
 	$userPrefs = $db->query($prefs_sql)->fetchAll(PDO::FETCH_ASSOC);
 } else {
 
     //add features that makes it so that nothing but this page on this server can POST
-    $timeZone = new DateTimeZone('America/Los_Angeles');
-    $dt = new DateTime();
-    $dt->setTimezone($timeZone);
+
     //do I really need a new PDO for each switch case, or do we just need it for the new page load?
     //why did INSERT work on the original PDO but UPDATE did not? Weird.
     switch ($_POST["action"]) {
@@ -55,43 +64,31 @@ if (!$_POST) {
             $db5->prepare($saveEnabled_sql)->execute(['enabled' => $_POST['enabled'], 'id' => $_POST['id']]);
             exit;
             break;
+        case "saveAbsent":
+            $db5 = new PDO("sqlite:coldcalls.sqlite3");
+            $db5->prepare($saveAbsent_sql)->execute(['absent' => $_POST['absent'], 'id' => $_POST['id'],'date' => $dt->format('Y-m-d')]);
+            exit;
+            break;
         case "updatePrefs":
             $db4 = new PDO("sqlite:coldcalls.sqlite3");
-            $db4->prepare($updatePrefs_sql)->execute(['numPeriods' => $_POST['numPeriods'],'defaultPeriod' => $_POST['defaultPeriod'], 'allowVolunteers' => $_POST['allowVolunteers'], 'allowRepeats' => $_POST['allowRepeats']]);
+            $db4->prepare($updatePrefs_sql)->execute(['minimumBetween' => $_POST['minimumBetween'],'nameSelection' => $_POST['nameSelection'], 'numPeriods' => $_POST['numPeriods'],'defaultPeriod' => $_POST['defaultPeriod'], 'allowVolunteers' => $_POST['allowVolunteers'], 'allowRepeats' => $_POST['allowRepeats']]);
+            exit;
+            break;
+        case "updateBias":
+            $db6 = new PDO("sqlite:coldcalls.sqlite3");
+            $db6->prepare($updateBias_sql)->execute(['coefficient' => $_POST['coefficient'], 'id' => $_POST['id']]);
             exit;
             break;
     }
 }
-// Use $_GET to specify period so we can bookmark it 
-if(isset($_GET['p'])) {
-
-    switch ($_GET['p']) {
-
-        case 1:
-            $getPeriod = 1;
-            break;
-        case 2:
-            $getPeriod = 2;
-            break;
-        case 3:
-            $getPeriod = 3;
-            break;
-        case 4:
-            $getPeriod = 4;
-            break;
-        case 5:
-            $getPeriod = 5;
-            break;
-        case 6:
-            $getPeriod = 6;
-            break;
-    }
-
+// Use $_GET to specify period so we can bookmark it
+if(isset($_GET['p']) && ($_GET['p'] <= $userPrefs[0]['numPeriods'])) {
+    $getPeriod = $_GET['p'];
 }  else {$getPeriod = 99;}
 ?>
-<html lang="english">
+<html lang="en-us">
 <head>
-    <title>Coldcalls</title>
+    <title>colderCalls 0.2</title>
 <meta charset="utf-8">
 <meta content="width=device-width, initial-scale=1" name="viewport">
 <link href="static/bootstrap-4.3.1-dist/css/bootstrap.min.css" rel="stylesheet">
@@ -99,14 +96,15 @@ if(isset($_GET['p'])) {
 <script src="static/popper.js"></script>
 <script src="static/bootstrap-4.3.1-dist/js/bootstrap.min.js"></script>
 <link rel="stylesheet" href="static/fontawesome-free-5.9.0-web/css/all.min.css">
-
+<script src="select.js"></script>
 <script>
 "use strict";
 //Try to limit the use of globals. Better yet, eliminate them.
 //Get the data from the database via PHP
 let students = JSON.parse('<?php echo json_encode($students,JSON_NUMERIC_CHECK ); ?>',(k, v) => v === "true" ? true : v === "false" ? false : v);
+//reset absences
 let userPreferences = JSON.parse('<?php echo json_encode($userPrefs[0], JSON_NUMERIC_CHECK); ?>',(k, v) => v === "true" ? true : v === "false" ? false : v);
-let currentPeriod;
+var currentPeriod;
 
 
 //Set the globals; a GET overrides user default.
@@ -117,36 +115,10 @@ if (getPeriod===99)
     } else {
     currentPeriod = getPeriod;
 }
-let lastID = null;
+var lastID = new Array;
 
 //When the page loads we start with our first person and prepare the table, but hide it.
 $(document).ready(function () {
-
-    //Initialize the fancy dropdown menu
-    $("#p1").click(function () {
-        currentPeriod = 1;
-        updateTable();
-    });
-    $("#p2").click(function () {
-        currentPeriod = 2;
-        updateTable();
-    });
-    $("#p3").click(function () {
-        currentPeriod = 3;
-        updateTable();
-    });
-    $("#p4").click(function () {
-        currentPeriod = 4;
-        updateTable();
-    });
-    $("#p5").click(function () {
-        currentPeriod = 5;
-        updateTable();
-    });
-    $("#p6").click(function () {
-        currentPeriod = 6;
-        updateTable();
-    });
 
     //Initialize the student table
     $("#bigTable").hide();
@@ -157,14 +129,14 @@ $(document).ready(function () {
     updatePrefs();
 
     //Pick the first victim on load
-    $("#victim").html(selectStudent(currentPeriod));
+    $("#victim").html(selectStudent2(currentPeriod));
 
     //Hook the action of the correct button to choosing a new person, updating their correct tally
     //Don't try and update the Volunteer's count
     $("#correct").click(function () {
         if (lastID !== 0) {
             for (let i in students) {
-                if (students[i]["id"] === lastID) {
+                if (students[i]["id"] === lastID[Object.keys(lastID).length - 1]) {
                     students[i]["correct"]++;
                     $.post("random.php",
                         {
@@ -179,7 +151,7 @@ $(document).ready(function () {
             }
             updateTable();
         }
-        $("#victim").html(selectStudent(currentPeriod));
+        $("#victim").html(selectStudent2(currentPeriod));
     });
 
     //Hook the action of the incorrect button to pickign a new person, updating their incorrect tally
@@ -187,7 +159,7 @@ $(document).ready(function () {
     $("#incorrect").click(function () {
         if (lastID !== 0) {
             for (let i in students) {
-                if (students[i]["id"] === lastID) {
+                if (students[i]["id"] === lastID[Object.keys(lastID).length - 1]) {
                     students[i]["incorrect"]++;
                     $.post("random.php",
                         {
@@ -203,12 +175,12 @@ $(document).ready(function () {
         }
 
 
-        $("#victim").html(selectStudent(currentPeriod));
+        $("#victim").html(selectStudent2(currentPeriod));
     });
 
     //The skip button just gets a new student
     $("#skipButton").click(function () {
-        $("#victim").html(selectStudent(currentPeriod));
+        $("#victim").html(selectStudent2(currentPeriod));
     });
 
     //The table button toggles the appearance of the student table
@@ -240,12 +212,18 @@ function saveEnabled() {
     }
 }
 
+function changePeriod (period) {
+    currentPeriod = period;
+    updateTable();
+}
 function periodMenuDropDownf() {
 //Erase what's there.
     $("#periodDropDownMenu").empty();
     for (let i=1; (i-1) < userPreferences.numPeriods;i++) {
 
-            $("#periodDropDownMenu").append('<span class="dropdown-item" id="p'
+            $("#periodDropDownMenu").append('<span class="dropdown-item" onclick="changePeriod('
+                + i
+                + ');" id="p'
                 + i
                 + '">'
                 + i
@@ -262,15 +240,63 @@ function updatePrefs () {
                 +'</td></tr><tr><td>Include Volunteer<td><div class="form-check-inline"><label class="form-check-label"><input type="checkbox" onclick="toggleVolunteers();" class="form-check-input"'
 		+ ((userPreferences["allowVolunteers"])? "checked":"unchecked")
 		+' id="allowVolunteersCheckBox"></label></div></td></tr>'
-                +'</td></tr><tr><td>Allow Repeats<td><div class="form-check-inline"><label class="form-check-label"><input type="checkbox" onclick="toggleRepeats();" class="form-check-input"'
-		+ ((userPreferences["allowRepeats"])? "checked":"unchecked")
-		+' id="allowRepeatsCheckBox"></label></div></td></tr>'
         +'<tr><td>Number of Periods</td><td><div class="form-group">'
-    +'<select class="form-control-sm" id="numPeriodSelector" onchange="updateNumPeriods();"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select></div>'
-    +'</td></tr>');
+        +'<select class="form-control-sm" id="numPeriodSelector" onchange="updateNumPeriods();"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select></div>'
+        +'</td></tr>'
+        +'<tr><td>Minimum calls before repeat</td>'
+        +'<td><div class="slidecontainer"><input type="range" oninput="updateMinText();" onchange="updateMin();" min="0" max="11" value="1" class="slider" id="betweenSlide"></div>'
+        +'<div id="minimumBetweenDisplay"></div></td></tr>'
+        + '<tr><td>Name Format</td><td><div onclick="updateNameSelection();"><div class="form-check-inline"><label class="form-check-label"><input type="radio" class="form-check-input" name="nameSelectRadios" value=3>First & Last Name</label></div><div class="form-check-inline"><label class="form-check-label">'
+        + '<input type="radio" class="form-check-input" name="nameSelectRadios" value=5>First Name & Last Initial</label></div><div class="form-check-inline disabled"><label class="form-check-label"><input type="radio" class="form-check-input" name="nameSelectRadios" value=1>First Name Only</label></div></div></td></tr>'
+    );
+    $('input[name=nameSelectRadios][value='+userPreferences.nameSelection+']').prop("checked",true);
+	$("#betweenSlide").val(userPreferences["minimumBetween"]);
+	$("#minimumBetweenDisplay").text($("#betweenSlide").val());
 	$("#defaultPeriodSelector").val(userPreferences["defaultPeriod"]);
     $("#numPeriodSelector").val(userPreferences["numPeriods"]);
 }
+
+function updateNameSelection() {
+    userPreferences["nameSelection"] = $('input[name=nameSelectRadios]:checked').val();
+    $.post("random.php",
+        {
+            action: "updatePrefs",
+            defaultPeriod: userPreferences["defaultPeriod"],
+            allowVolunteers: userPreferences["allowVolunteers"],
+            allowRepeats: userPreferences["allowRepeats"],
+            numPeriods: userPreferences["numPeriods"],
+            minimumBetween: userPreferences["minimumBetween"],
+            nameSelection: userPreferences["nameSelection"]
+        }
+    );
+}
+
+function updateMinText()
+{
+    let value = $("#betweenSlide").val();
+    $("#minimumBetweenDisplay").text(value);
+    if (value === "0") { $("#minimumBetweenDisplay").empty(); $("#minimumBetweenDisplay").text("Repeats Allowed.");}
+    if (value === "11") { $("#minimumBetweenDisplay").empty(); $("#minimumBetweenDisplay").text("Full Class Before Repeat.");}
+
+}
+
+function updateMin()
+{
+
+    userPreferences["minimumBetween"] = $("#defaultPeriodSelector").val();
+    $.post("random.php",
+        {
+            action: "updatePrefs",
+            defaultPeriod: userPreferences["defaultPeriod"],
+            allowVolunteers: userPreferences["allowVolunteers"],
+            allowRepeats: userPreferences["allowRepeats"],
+            numPeriods: userPreferences["numPeriods"],
+            minimumBetween: userPreferences["minimumBetween"],
+            nameSelection: userPreferences["nameSelection"]
+        }
+    );
+}
+
 
 function updateNumPeriods()
 {
@@ -281,7 +307,9 @@ function updateNumPeriods()
             defaultPeriod: userPreferences["defaultPeriod"],
             allowVolunteers: userPreferences["allowVolunteers"],
             allowRepeats: userPreferences["allowRepeats"],
-            numPeriods: userPreferences["numPeriods"]
+            numPeriods: userPreferences["numPeriods"],
+            minimumBetween: userPreferences["minimumBetween"],
+            nameSelection: userPreferences["nameSelection"]
         }
     );
     periodMenuDropDownf();
@@ -295,7 +323,10 @@ function updatePeriod()
             action: "updatePrefs",
             defaultPeriod: userPreferences["defaultPeriod"],
             allowVolunteers: userPreferences["allowVolunteers"],
-            allowRepeats: userPreferences["allowRepeats"]
+            allowRepeats: userPreferences["allowRepeats"],
+            numPeriods: userPreferences["numPeriods"],
+            minimumBetween: userPreferences["minimumBetween"],
+            nameSelection: userPreferences["nameSelection"]
         }
     );
 }
@@ -309,7 +340,10 @@ function toggleVolunteers()
             action: "updatePrefs",
             defaultPeriod: userPreferences["defaultPeriod"],
             allowVolunteers: userPreferences["allowVolunteers"],
-            allowRepeats: userPreferences["allowRepeats"]
+            allowRepeats: userPreferences["allowRepeats"],
+            numPeriods: userPreferences["numPeriods"],
+            minimumBetween: userPreferences["minimumBetween"],
+            nameSelection: userPreferences["nameSelection"]
         }
     );
 }
@@ -322,16 +356,60 @@ function toggleRepeats()
             action: "updatePrefs",
             defaultPeriod: userPreferences["defaultPeriod"],
             allowVolunteers: userPreferences["allowVolunteers"],
-            allowRepeats: userPreferences["allowRepeats"]
+            allowRepeats: userPreferences["allowRepeats"],
+            numPeriods: userPreferences["numPeriods"],
+            minimumBetween: userPreferences["minimumBetween"],
+            nameSelection: userPreferences["nameSelection"]
         }
     );
 }
 function toggleStudentEnabled(IDnumber)
-    {
-        students[IDnumber]["enabled"] === true ? students[IDnumber]["enabled"] = false:students[IDnumber]["enabled"] = true;
+{
+    students[IDnumber]["enabled"] === true ? students[IDnumber]["enabled"] = false:students[IDnumber]["enabled"] = true;
+    updateTable();
+}
+
+function toggleStudentAbsent(IDnumber) {
+    if (IDnumber !== 0) {
+        students[IDnumber]["absent"] === true ? students[IDnumber]["absent"] = false : students[IDnumber]["absent"] = true;
+        $.post("random.php",
+            {
+                action: "saveAbsent",
+                id: students[IDnumber]["id"],
+                absent: students[IDnumber]["absent"]
+            }
+        );
         updateTable();
     }
+}
 
+function getIndexByID(idno)
+{
+    for (let i in students) {
+        if (students[i]["id"] === idno) { return i;}
+    }
+}
+
+function updateBias(index)
+{
+   students[index]["coefficient"] = $('#slide'+index).val();
+    $.post("random.php",
+        {
+            action: "updateBias",
+            id: students[index]["id"],
+            coefficient: students[index]["coefficient"]
+        }
+    );
+  //  updateTable();
+}
+
+
+function getIDbyIndexBy(idxno)
+{
+    for (let i in students) {
+        if (idxno === students[i]["id"]) { return students[i]["id"];}
+    }
+}
 function updateTable () {
     //Erase what's there.
     $("#studentTable").empty();
@@ -344,10 +422,24 @@ function updateTable () {
                     + students[i]["l_name"]
                 + "</td><td>"
                     // add a slider for bias
-//                + '<div class="slidecontainer"><input type="range" min="-10" max="10" value="0" class="slider" id="slide'
-//                +  students[i]["id"]
-//                + '"></div></td>'
+                + '<div class="slidecontainer"><input type="range" oninput="updateBiasText('
+                + i
+                 + ');" onchange="updateBias('
+                + i
+                + ');" min="0" max="10" value="1" class="slider" id="biasSlide'
+                +  i
+                + '"></div><div id="biasText'
+                + i
+                + '"</div></td><td>'
                 + ((students[i]["correct"] > 0 || students[i]["incorrect"] > 0) ? Math.round(((students[i]["correct"]) / (students[i]["correct"] + students[i]["incorrect"])) * 100)+"%" :" ")
+                + '</td><td><div class="form-check-inline"><label class="form-check-label">'
+                + '<input type="checkbox" class="form-check-input" onclick="toggleStudentAbsent('
+                + i
+                + ');"'
+                + ((students[i]["absent"]) ? "checked" : "unchecked")
+                + ' id="absentButton'
+                + students[i]["id"]
+                + '"></label></div></td>'
                 + '</td><td><div class="form-check-inline"><label class="form-check-label">'
                 + '<input type="checkbox" class="form-check-input" onclick="toggleStudentEnabled('
                 + i
@@ -357,42 +449,23 @@ function updateTable () {
                 + students[i]["id"]
                 + '"></label></div></td></tr>'
             );
+            $('#biasSlide'+i).val(students[i]["coefficient"]);
+            $('#biasText'+i).text(students[i]["coefficient"]);
 
         }
     }
 }
 
+function updateBiasText(index)
+{
+    let value = $('#biasSlide'+index).val();
+    $('#biasText'+index).text(value);
+    if (value === "0") { $('#biasSlide'+index).empty(); $('#biasText'+index).text("Won't be called.");}
+
+}
+
 //add a function that auto biases, trying to get more involvement from those who answer poorly.
-function selectStudent (period) {
-//Re do this so that it makes an array of the in-play student IDs instead of the array indexes, applies biasing, and then
-    //returns the student ID
-    // Pick from the list unless they are disabled, unless we don't want repeats and they are the most recent. Add volunteer to the list if option is enabled.
-    let studentsCopy = JSON.parse(JSON.stringify(students));
-    let studentsSelectable = [{"id":0,"f_name" : "Volunteer",  "l_name": "", "enabled" : false, "period" :period},{"id":1}];
-    let j=1;
-    for (let i in studentsCopy)
-    {
-        if (studentsCopy[i]["period"]===period) {
-            studentsSelectable[j] = studentsCopy[i];
-            j++;
-        }
-    }
-    let winner = 1;
 
-    studentsSelectable[0]["enabled"] = userPreferences["allowVolunteers"] === true;
-    if (!userPreferences["allowRepeats"]) {
-        do {
-            winner = Math.floor(Math.random() *  Math.floor(Object.keys(studentsSelectable).length))
-        }  while ((studentsSelectable[winner]["id"] === lastID || !studentsSelectable[winner]["enabled"]) && j>2);
-
-    } else {
-        do {
-            winner = Math.floor(Math.random() * Math.floor(Object.keys(studentsSelectable).length))
-        } while (!studentsSelectable[winner]["enabled"] && j>2);
-        }
-    lastID = studentsSelectable[winner]["id"];
-    return studentsSelectable[winner]["f_name"] + " " + studentsSelectable[winner]["l_name"];
-    }
 </script>
 </head>
 <body>
@@ -420,11 +493,14 @@ function selectStudent (period) {
             <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
                 Periods
             </button>
-            <div class="dropdown-menu" id="periodDropDownMenu">
+            <div class="dropdown-menu" id="periodDropDownMenu" onchange="changePeriod();">
              <!--   //Programatically generate, but then make sure they don't go away when in the database -->
             </div>
         </div>
 </div>
+    <div class="btn-group fa-pull-right">
+        <button class="btn btn-outline-danger" id="absentButton" type="button" onclick="toggleStudentAbsent(getIndexByID(lastID[Object.keys(lastID).length - 1]));">Mark Absent</button>
+    </div>
 <!--    //maybe add a timer with an option to countdown and an optional stopwatch widget alonog with
     //confirmation that the updates have been made or errors thrown here. -->
 <div id="statusBar"></div>
@@ -432,8 +508,8 @@ function selectStudent (period) {
         <table class="table table-hover">
                 <thead class="thead-light">
                 <tr>
-                        <th>Preference</th>
-                        <th>Enabled</th>
+                        <th>Preference Name</th>
+                        <th>Setting</th>
                 </tr>
                 </thead>
                 <tbody id="preferencesTableItems">
@@ -447,8 +523,9 @@ function selectStudent (period) {
 		<tr>
 			<th>#</th>
 			<th>Name</th>
- <!--           <th>Bias</th> -->
+            <th>Bias</th>
 			<th>% Correct</th>
+            <th>Absent</th>
 			<th>Enabled</th>
 		</tr>
 		</thead>
