@@ -14,6 +14,7 @@ function selectStudent2 (period) {
     //Pop enough off the lastID list (preferences can change)
     let present = Object.keys(studentsSelectable).length;
     $("#statusBar").text("Total Present: " + present);
+    $("#statusBar").append(userPreferences["allowVolunteers"] ? " (including Volunteer)": " ");
 
 
 
@@ -61,7 +62,6 @@ function selectStudent2 (period) {
         lastID.pop();
     }
     lastID.unshift(winner);
-    $("#statusBar").append("—Last IDs: "+lastID);
     for (let i=0;i < Object.keys(studentsSelectable).length; i++) {
         if (winner === studentsSelectable[i]["id"]) {
             let output =  studentsSelectable[i]["f_name"];

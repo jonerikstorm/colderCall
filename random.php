@@ -120,32 +120,6 @@ var lastID = new Array;
 //When the page loads we start with our first person and prepare the table, but hide it.
 $(document).ready(function () {
 
-    //Initialize the fancy dropdown menu
-    $("#p1").click(function () {
-        currentPeriod = 1;
-        updateTable();
-    });
-    $("#p2").click(function () {
-        currentPeriod = 2;
-        updateTable();
-    });
-    $("#p3").click(function () {
-        currentPeriod = 3;
-        updateTable();
-    });
-    $("#p4").click(function () {
-        currentPeriod = 4;
-        updateTable();
-    });
-    $("#p5").click(function () {
-        currentPeriod = 5;
-        updateTable();
-    });
-    $("#p6").click(function () {
-        currentPeriod = 6;
-        updateTable();
-    });
-
     //Initialize the student table
     $("#bigTable").hide();
     updateTable();
@@ -238,12 +212,18 @@ function saveEnabled() {
     }
 }
 
+function changePeriod (period) {
+    currentPeriod = period;
+    updateTable();
+}
 function periodMenuDropDownf() {
 //Erase what's there.
     $("#periodDropDownMenu").empty();
     for (let i=1; (i-1) < userPreferences.numPeriods;i++) {
 
-            $("#periodDropDownMenu").append('<span class="dropdown-item" id="p'
+            $("#periodDropDownMenu").append('<span class="dropdown-item" onclick="changePeriod('
+                + i
+                + ');" id="p'
                 + i
                 + '">'
                 + i
@@ -429,11 +409,15 @@ function updateTable () {
                     + students[i]["l_name"]
                 + "</td><td>"
                     // add a slider for bias
-                + '<div class="slidecontainer"><input type="range" onchange="updateBias('
+                + '<div class="slidecontainer"><input type="range" oninput="updateBiasText('
                 + i
-                + ');" min="0" max="10" value="1" class="slider" id="slide'
+                 + ');" onchange="updateBias('
+                + i
+                + ');" min="0" max="10" value="1" class="slider" id="biasSlide'
                 +  i
-                + '"></div></td><td>'
+                + '"></div><div id="biasText'
+                + i
+                + '"</div></td><td>'
                 + ((students[i]["correct"] > 0 || students[i]["incorrect"] > 0) ? Math.round(((students[i]["correct"]) / (students[i]["correct"] + students[i]["incorrect"])) * 100)+"%" :" ")
                 + '</td><td><div class="form-check-inline"><label class="form-check-label">'
                 + '<input type="checkbox" class="form-check-input" onclick="toggleStudentAbsent('
@@ -452,10 +436,19 @@ function updateTable () {
                 + students[i]["id"]
                 + '"></label></div></td></tr>'
             );
-            $('#slide'+i).val(students[i]["coefficient"]);
+            $('#biasSlide'+i).val(students[i]["coefficient"]);
+            $('#biasText'+i).text(students[i]["coefficient"]);
 
         }
     }
+}
+
+function updateBiasText(index)
+{
+    let value = $('#biasSlide'+index).val();
+    $('#biasText'+index).text(value);
+    if (value === "0") { $('#biasSlide'+index).empty(); $('#biasText'+index).text("Won't be called.");}
+
 }
 
 //add a function that auto biases, trying to get more involvement from those who answer poorly.
@@ -487,13 +480,13 @@ function updateTable () {
             <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
                 Periods
             </button>
-            <div class="dropdown-menu" id="periodDropDownMenu">
+            <div class="dropdown-menu" id="periodDropDownMenu" onchange="changePeriod();">
              <!--   //Programatically generate, but then make sure they don't go away when in the database -->
             </div>
         </div>
 </div>
     <div class="btn-group fa-pull-right">
-        <button class="btn btn-outline-danger" id="absentButton" type="button" onclick="toggleStudentAbsent(getIndexByID(lastID[Object.keys(lastID).length() - 1]));">Mark Absent</button>
+        <button class="btn btn-outline-danger" id="absentButton" type="button" onclick="toggleStudentAbsent(getIndexByID(lastID[Object.keys(lastID).length - 1]));">Mark Absent</button>
     </div>
 <!--    //maybe add a timer with an option to countdown and an optional stopwatch widget alonog with
     //confirmation that the updates have been made or errors thrown here. -->
