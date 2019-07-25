@@ -65,7 +65,24 @@ CREATE TABLE userPreferences (
                             NOT NULL
                             DEFAULT (3) 
 );
-
+INSERT INTO userPreferences (
+                                id,
+                                defaultPeriod,
+                                allowVolunteers,
+                                allowRepeats,
+                                numPeriods,
+                                minimumBetween,
+                                nameSelection
+                            )
+                            VALUES (
+                                1,
+                                1,
+                                'true',
+                                'false',
+                                6,
+                                1,
+                                5
+                            );
 
 COMMIT TRANSACTION;
 PRAGMA foreign_keys = on;
