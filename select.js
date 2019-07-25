@@ -23,7 +23,6 @@ function selectStudent2 (period) {
     //These people are only temporarily out so we need to adjust the length of lastID accordingly
     for (let i=0; i < Object.keys(lastID).length; i++) {
         for (let j = Object.keys(studentsSelectable).length - 1; j > -1;j--) {
-            console.log(j);
             if (studentsSelectable[j]["id"] === lastID[i]) {
                 studentsSelectable.splice(j, 1);
 
@@ -65,11 +64,11 @@ function selectStudent2 (period) {
     for (let i=0;i < Object.keys(studentsSelectable).length; i++) {
         if (winner === studentsSelectable[i]["id"]) {
             let output =  studentsSelectable[i]["f_name"];
-            if (userPreferences.includeLastName) {
+            if (userPreferences.nameSelection === "3") {
                 output += " ";
                 output += studentsSelectable[i]["l_name"];
             }
-            if (userPreferences.includeLastInitial) {
+            if (userPreferences.nameSelection === "5") {
                 output += " ";
                 output += studentsSelectable[i]["l_name"][0];
                 if(i!==0) {

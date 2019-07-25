@@ -10,7 +10,7 @@ $incrementIncorrect_sql = "UPDATE `STUDENTS` SET `incorrect` = :incorrecto WHERE
 $saveEnabled_sql = "UPDATE `STUDENTS` SET `enabled` = :enabled WHERE `id` = :id;";
 $updateBias_sql = "UPDATE `STUDENTS` SET `coefficient` = :coefficient WHERE `id` = :id;";
 $saveAbsent_sql = "UPDATE `STUDENTS` SET `absent` = :absent, `absentDate` = :date WHERE `id` = :id;";
-$updatePrefs_sql = "UPDATE `userPreferences` SET `numPeriods` = :numPeriods, `defaultPeriod` = :defaultPeriod, `allowVolunteers` = :allowVolunteers, `allowRepeats` = :allowRepeats, `minimumBetween`= :minimumBetween, `includeLastName`= :includeLastname, `includeLastInitial` =:includeLastInitial;";
+$updatePrefs_sql = "UPDATE `userPreferences` SET `numPeriods` = :numPeriods, `defaultPeriod` = :defaultPeriod, `allowVolunteers` = :allowVolunteers, `allowRepeats` = :allowRepeats, `minimumBetween`= :minimumBetween, `nameSelection` = :nameSelection;";
 
 // Check $_POST for self-AJAXing to update who was called
 if (!file_exists('coldcalls.sqlite3')) {
@@ -71,7 +71,7 @@ if (!$_POST) {
             break;
         case "updatePrefs":
             $db4 = new PDO("sqlite:coldcalls.sqlite3");
-            $db4->prepare($updatePrefs_sql)->execute(['minimumBetween' => $_POST['minimumBetween'],'includeLastName' => $_POST['includeLastName'],'includeLastInitial' => $_POST['includeLastInitial'], 'numPeriods' => $_POST['numPeriods'],'defaultPeriod' => $_POST['defaultPeriod'], 'allowVolunteers' => $_POST['allowVolunteers'], 'allowRepeats' => $_POST['allowRepeats']]);
+            $db4->prepare($updatePrefs_sql)->execute(['minimumBetween' => $_POST['minimumBetween'],'nameSelection' => $_POST['nameSelection'], 'numPeriods' => $_POST['numPeriods'],'defaultPeriod' => $_POST['defaultPeriod'], 'allowVolunteers' => $_POST['allowVolunteers'], 'allowRepeats' => $_POST['allowRepeats']]);
             exit;
             break;
         case "updateBias":
@@ -246,11 +246,29 @@ function updatePrefs () {
         +'<tr><td>Minimum calls before repeat</td>'
         +'<td><div class="slidecontainer"><input type="range" oninput="updateMinText();" onchange="updateMin();" min="0" max="11" value="1" class="slider" id="betweenSlide"></div>'
         +'<div id="minimumBetweenDisplay"></div></td></tr>'
+        + '<tr><td>Name Format</td><td><div onclick="updateNameSelection();"><div class="form-check-inline"><label class="form-check-label"><input type="radio" class="form-check-input" name="nameSelectRadios" value=3>First & Last Name</label></div><div class="form-check-inline"><label class="form-check-label">'
+        + '<input type="radio" class="form-check-input" name="nameSelectRadios" value=5>First Name & Last Initial</label></div><div class="form-check-inline disabled"><label class="form-check-label"><input type="radio" class="form-check-input" name="nameSelectRadios" value=1>First Name Only</label></div></div></td></tr>'
     );
+    $('input[name=nameSelectRadios]:checked').val(userPreferences["nameSelection"]);
 	$("#betweenSlide").val(userPreferences["minimumBetween"]);
 	$("#minimumBetweenDisplay").text($("#betweenSlide").val());
 	$("#defaultPeriodSelector").val(userPreferences["defaultPeriod"]);
     $("#numPeriodSelector").val(userPreferences["numPeriods"]);
+}
+
+function updateNameSelection() {
+    userPreferences["nameSelection"] = $('input[name=nameSelectRadios]:checked').val();
+    $.post("random.php",
+        {
+            action: "updatePrefs",
+            defaultPeriod: userPreferences["defaultPeriod"],
+            allowVolunteers: userPreferences["allowVolunteers"],
+            allowRepeats: userPreferences["allowRepeats"],
+            numPeriods: userPreferences["numPeriods"],
+            minimumBetween: userPreferences["minimumBetween"],
+            nameSelection: userPreferences["nameSelection"]
+        }
+    );
 }
 
 function updateMinText()
@@ -274,8 +292,7 @@ function updateMin()
             allowRepeats: userPreferences["allowRepeats"],
             numPeriods: userPreferences["numPeriods"],
             minimumBetween: userPreferences["minimumBetween"],
-            includeLastName: userPreferences["includeLastName"],
-            includeLastInitial: userPreferences["includeLastInitial"]
+            nameSelection: userPreferences["nameSelection"]
         }
     );
 }
@@ -292,8 +309,7 @@ function updateNumPeriods()
             allowRepeats: userPreferences["allowRepeats"],
             numPeriods: userPreferences["numPeriods"],
             minimumBetween: userPreferences["minimumBetween"],
-            includeLastName: userPreferences["includeLastName"],
-            includeLastInitial: userPreferences["includeLastInitial"]
+            nameSelection: userPreferences["nameSelection"]
         }
     );
     periodMenuDropDownf();
@@ -310,8 +326,7 @@ function updatePeriod()
             allowRepeats: userPreferences["allowRepeats"],
             numPeriods: userPreferences["numPeriods"],
             minimumBetween: userPreferences["minimumBetween"],
-            includeLastName: userPreferences["includeLastName"],
-            includeLastInitial: userPreferences["includeLastInitial"]
+            nameSelection: userPreferences["nameSelection"]
         }
     );
 }
@@ -328,8 +343,7 @@ function toggleVolunteers()
             allowRepeats: userPreferences["allowRepeats"],
             numPeriods: userPreferences["numPeriods"],
             minimumBetween: userPreferences["minimumBetween"],
-            includeLastName: userPreferences["includeLastName"],
-            includeLastInitial: userPreferences["includeLastInitial"]
+            nameSelection: userPreferences["nameSelection"]
         }
     );
 }
@@ -345,8 +359,7 @@ function toggleRepeats()
             allowRepeats: userPreferences["allowRepeats"],
             numPeriods: userPreferences["numPeriods"],
             minimumBetween: userPreferences["minimumBetween"],
-            includeLastName: userPreferences["includeLastName"],
-            includeLastInitial: userPreferences["includeLastInitial"]
+            nameSelection: userPreferences["nameSelection"]
         }
     );
 }
