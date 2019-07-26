@@ -59,6 +59,8 @@ CREATE TABLE userPreferences (
     minimumBetween  INT     CHECK (minimumBetween >= -1) 
                             DEFAULT (1) 
                             NOT NULL,
+    version         TEXT    DEFAULT('0.3.0')
+                            NOT NULL,                        
     nameSelection   INT     CHECK (nameSelection = 1 OR 
                                    nameSelection = 3 OR 
                                    nameSelection = 5) 
@@ -72,7 +74,8 @@ INSERT INTO userPreferences (
                                 allowRepeats,
                                 numPeriods,
                                 minimumBetween,
-                                nameSelection
+                                nameSelection,
+                                version
                             )
                             VALUES (
                                 1,
@@ -81,11 +84,19 @@ INSERT INTO userPreferences (
                                 'false',
                                 6,
                                 1,
-                                5
+                                5,
+                                '0.3.0'
                             );
 
 COMMIT TRANSACTION;
 PRAGMA foreign_keys = on;
 ";
-
-// Upload and receive a CSV file from Google Classroom.
+function db_init()
+{
+    $db_init = new PDO("sqlite:coldcalls.sqlite3");
+    $init_queries = explode(";", $init_sql);
+    foreach ($init_queries as $explodedQuery) {
+        $db_init->query($explodedQuery . ";");
+    }
+    echo "Initializing database.";
+}
