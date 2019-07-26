@@ -54,6 +54,7 @@ if(isset($_GET['p']) && ($_GET['p'] <= $userPrefs[0]['numPeriods'])) {
 <script src="static/popper.js"></script>
 <script src="static/bootstrap-4.3.1-dist/js/bootstrap.min.js"></script>
 <script src="select.js"></script><script src="prefs.js"></script><script src="students.js"></script>
+<script src="select.js"></script>
 <script>
     // All we are going to do here is handle the DOM ready function.
 "use strict";
@@ -94,8 +95,11 @@ $(document).ready(function () {
     //Hook the action of the correct button to choosing a new person, updating their correct tally
     //Don't try and update the Volunteer's count
     $("#correct").click(function () {
-        if (lastID[0] !== 0) {
+        const statusBarText = $("#statusBar").html();
+        if (lastID[0]["id"] !== 0) {
+
             for (let i in students) {
+                $("#statusBar").html(statusBarText+'<div class="spinner-border spinner-border-sm"></div>');
                 if (students[i]["id"] === lastID[Object.keys(lastID).length - 1]) {
                     students[i]["correct"]++;
                     $.post("random.php",
@@ -105,7 +109,7 @@ $(document).ready(function () {
                             student_id: students[i]["id"],
                             correcto: students[i]["correct"],
                             isCorrect: "true"
-                        }
+                        }, () => {$("#statusBar").html(statusBarText);}
                     );
                 }
             }
@@ -117,8 +121,11 @@ $(document).ready(function () {
     //Hook the action of the incorrect button to pickign a new person, updating their incorrect tally
     //Don't try and update the Volunteer's count
     $("#incorrect").click(function () {
-        if (lastID[0] !== 0) {
+        const statusBarText = $("#statusBar").html();
+        if (lastID[0]["id"] !== 0) {
+
             for (let i in students) {
+                $("#statusBar").html(statusBarText+'<div class="spinner-border spinner-border-sm"></div>');
                 if (students[i]["id"] === lastID[Object.keys(lastID).length - 1]) {
                     students[i]["incorrect"]++;
                     $.post("random.php",
@@ -128,13 +135,13 @@ $(document).ready(function () {
                             student_id: students[i]["id"],
                             incorrecto: students[i]["incorrect"],
                             isCorrect: "false"
-                        }
+                        }, () => {$("#statusBar").html(statusBarText);}
                     );
                 }
             }
         }
 
-
+        updateTable();
         $("#victim").html(selectStudent2(currentPeriod));
     });
 
@@ -161,68 +168,75 @@ $(document).ready(function () {
 </head>
 <body>
 <div class="container-fluid">
-
-		<div class="jumbotron-fluid">
-            <div class="container-fluid">
-             <div class="display-2" style="text-align:center" id="victim">
-             </div>
-            </div>
-		</div>
-
-	<div class="row">
-		<div class="col-sm">
-			<button type="button" class="btn btn-block btn-success" id="correct">Correct</button>
-	  <button type="button" class="btn btn-block btn-secondary" id="skipButton">Skip</button>
-			<button type="button" class="btn btn-block btn-danger" id="incorrect">Incorrect</button>
-		</div>
-	</div>
-    <br/>
-    <div class="btn-group">
-        <button type="button" class="btn btn-primary" id="tableButton">Students</button>
-        <button type="button" class="btn btn-primary" id="prefsButton">Options</button>
-        <div class="btn-group">
-            <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
-                Periods
-            </button>
-            <div class="dropdown-menu" id="periodDropDownMenu" onchange="changePeriod();">
+    <div class="row">
+        <div class="col">
+            <div class="jumbotron-fluid">
+                <div class="display-2" style="text-align:center" id="victim"></div>
             </div>
         </div>
-</div>
-    <div class="btn-group fa-pull-right">
-        <button class="btn btn-outline-danger" id="absentButton" type="button" onclick="toggleStudentAbsent(getIndexByID(lastID[Object.keys(lastID).length - 1]));">Mark Absent</button>
     </div>
-<!--    //maybe add a timer with an option to countdown and an optional stopwatch widget alonog with
-    //confirmation that the updates have been made or errors thrown here. -->
-<div id="statusBar"></div>
-<div class="table-responsive-sm" id="preferencesTable">
+    <div class="row">
+        <div class="col">
+            <button type="button" class="btn btn-block btn-success" id="correct">Correct</button>
+            <button type="button" class="btn btn-block btn-secondary" id="skipButton">Skip</button>
+            <button type="button" class="btn btn-block btn-danger" id="incorrect">Incorrect</button>
+        </div>
+    </div>
+    <div class="row pt-1">
+        <div class="col">
+            <div class="btn-group">
+                <button type="button" class="btn btn-primary" id="tableButton">Students</button>
+                <button type="button" class="btn btn-primary" id="prefsButton">Options</button>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+                        Periods
+                    </button>
+                    <div class="dropdown-menu" id="periodDropDownMenu" onchange="changePeriod();"></div>
+                </div>
+            </div>
+            <div class="btn-group float-right">
+             <button class="btn btn-outline-danger" id="absentButton" type="button" onclick="toggleStudentAbsent(getIndexByID(lastID[Object.keys(lastID).length - 1]));">Mark Absent</button>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col" id="statusBar"></div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="table-responsive-sm border" id="preferencesTable">
         <table class="table table-hover">
+            <thead class="thead-light">
+                    <tr>
+                            <th>Preference Name</th>
+                            <th>Setting</th>
+                    </tr>
+            </thead>
+            <tbody id="preferencesTableItems"></tbody>
+        </table>
+    </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="table-responsive-sm border" id="bigTable">
+                <table class="table table-hover">
                 <thead class="thead-light">
                 <tr>
-                        <th>Preference Name</th>
-                        <th>Setting</th>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Bias</th>
+                    <th>% Correct</th>
+                    <th>Absent</th>
+                    <th>Enabled</th>
                 </tr>
                 </thead>
-                <tbody id="preferencesTableItems">
-                </tbody>
-        </table>
+                <tbody id="studentTable"></tbody>
+                </table>
+                <button class="btn btn-outline-primary" id="storeEnabled" type="button" onclick="saveEnabled();">Save Enabled Statuses</button>
+            </div>
         </div>
-
-<div class="table-responsive-sm" id="bigTable">
-	<table class="table table-hover">
-		<thead class="thead-light">
-		<tr>
-			<th>#</th>
-			<th>Name</th>
-            <th>Bias</th>
-			<th>% Correct</th>
-            <th>Absent</th>
-			<th>Enabled</th>
-		</tr>
-		</thead>
-		<tbody id="studentTable">
-		</tbody>
-	</table>
-    <button class="btn btn-outline-primary" id="storeEnabled" type="button" onclick="saveEnabled();">Save Enabled Statuses</button>
+    </div>
 </div>
 </body>
 </html>
