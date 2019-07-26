@@ -39,7 +39,7 @@ function handlepost() {
                 array_push($db_writeStudentArray, ['date' => null]);
             }
             $post_db->prepare($writeStudent_sql)->execute($db_writeStudentArray);
-
+            exit;
+            break;
     }
-}
 }

@@ -10,17 +10,17 @@ if (!file_exists('coldcalls.sqlite3')) {
 // If there is no $_POST, then we're loading the app.
 // Get all of the students and load the user preferences.
 if (!$_POST) {
-try {
-    $db = new PDO("sqlite:coldcalls.sqlite3");
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-}	catch (Exception $e) {
-    echo "Unable to connect to database.";
-    echo $e->getMessage();
-    exit;
-}
-$userPrefs = $db->query("SELECT * FROM `userPreferences`;")->fetchAll(PDO::FETCH_ASSOC);
-$students =  $db->query("SELECT * FROM `STUDENTS`;")->fetchAll(PDO::FETCH_OBJ);
-//Check if the students were absent today or earlier. If earlier, reset absence.
+    try {
+        $db = new PDO("sqlite:coldcalls.sqlite3");
+        $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    }	catch (Exception $e) {
+        echo "Unable to connect to database.";
+        echo $e->getMessage();
+        exit;
+    }
+    $userPrefs = $db->query("SELECT * FROM `userPreferences`;")->fetchAll(PDO::FETCH_ASSOC);
+    $students =  $db->query("SELECT * FROM `STUDENTS`;")->fetchAll(PDO::FETCH_OBJ);
+    //Check if the students were absent today or earlier. If earlier, reset absence.
     $timeZone = new DateTimeZone('America/Los_Angeles');
     $dt = new DateTime();
     $dt->setTimezone($timeZone);
@@ -35,6 +35,7 @@ $students =  $db->query("SELECT * FROM `STUDENTS`;")->fetchAll(PDO::FETCH_OBJ);
 //    If this is an AJAX query coming in, go do that.
     handlepost();
 }
+
 // Use $_GET to specify period so we can bookmark it. If someone is trying to get a number greater than
 // The number of periods set in the prefs, we ignore it. 99 comes through as meaning just load the default set in the prefs.
 if(isset($_GET['p']) && ($_GET['p'] <= $userPrefs[0]['numPeriods'])) {
@@ -163,7 +164,7 @@ $(document).ready(function () {
 
 		<div class="jumbotron-fluid">
             <div class="container-fluid">
-             <div class="display-1" style="text-align:center" id="victim">
+             <div class="display-2" style="text-align:center" id="victim">
              </div>
             </div>
 		</div>
@@ -184,7 +185,6 @@ $(document).ready(function () {
                 Periods
             </button>
             <div class="dropdown-menu" id="periodDropDownMenu" onchange="changePeriod();">
-             <!--   //Programatically generate, but then make sure they don't go away when in the database -->
             </div>
         </div>
 </div>
