@@ -95,7 +95,6 @@ if(isset($_GET['p']) && ($_GET['p'] <= $userPrefs[0]['numPeriods'])) {
 <script src="static/jquery-3.4.1.min.js"></script>
 <script src="static/popper.js"></script>
 <script src="static/bootstrap-4.3.1-dist/js/bootstrap.min.js"></script>
-<link rel="stylesheet" href="static/fontawesome-free-5.9.0-web/css/all.min.css">
 <script src="select.js"></script>
 <script>
 "use strict";
@@ -134,9 +133,11 @@ $(document).ready(function () {
     //Hook the action of the correct button to choosing a new person, updating their correct tally
     //Don't try and update the Volunteer's count
     $("#correct").click(function () {
+        const statusBarText = $("#statusBar").html();
         if (lastID[0]["id"] !== 0) {
-            $("#statusBar").prepend("<div class=\"spinner-border spinner-border-sm\"></div>");
+
             for (let i in students) {
+                $("#statusBar").html(statusBarText+'<div class="spinner-border spinner-border-sm"></div>');
                 if (students[i]["id"] === lastID[Object.keys(lastID).length - 1]) {
                     students[i]["correct"]++;
                     $.post("random.php",
@@ -146,7 +147,7 @@ $(document).ready(function () {
                             student_id: students[i]["id"],
                             correcto: students[i]["correct"],
                             isCorrect: "true"
-                        }
+                        }, () => {$("#statusBar").html(statusBarText);}
                     );
                 }
             }
@@ -158,9 +159,11 @@ $(document).ready(function () {
     //Hook the action of the incorrect button to pickign a new person, updating their incorrect tally
     //Don't try and update the Volunteer's count
     $("#incorrect").click(function () {
+        const statusBarText = $("#statusBar").html();
         if (lastID[0]["id"] !== 0) {
-            $("#statusBar").html("<div class=\"spinner-border spinner-border-sm\"></div>");
+
             for (let i in students) {
+                $("#statusBar").html(statusBarText+'<div class="spinner-border spinner-border-sm"></div>');
                 if (students[i]["id"] === lastID[Object.keys(lastID).length - 1]) {
                     students[i]["incorrect"]++;
                     $.post("random.php",
@@ -170,7 +173,7 @@ $(document).ready(function () {
                             student_id: students[i]["id"],
                             incorrecto: students[i]["incorrect"],
                             isCorrect: "false"
-                        }
+                        }, () => {$("#statusBar").html(statusBarText);}
                     );
                 }
             }
