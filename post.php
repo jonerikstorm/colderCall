@@ -5,7 +5,7 @@ function handlepost() {
     $incrementCorrect_sql = "UPDATE `STUDENTS` SET `correct` = :correcto WHERE `id`=:id;";
     $incrementIncorrect_sql = "UPDATE `STUDENTS` SET `incorrect` = :incorrecto WHERE `id` = :id;";
     $updateGlobalPrefs_sql = "UPDATE `globalPreferences` SET `numPeriods` = :numPeriods, `defaultPeriod` = :defaultPeriod WHERE `id` = 0;";
-    $updatePeriodPrefs_sql = "UPDATE `userPreferences` SET `allowVolunteers` = :allowVolunteers, `allowRepeats` = :allowRepeats, `minimumBetween`= :minimumBetween, `nameSelection` = :nameSelection WHERE `id` = :period;";
+    $updatePeriodPrefs_sql = "UPDATE `periodPreferences` SET `allowVolunteers` = :allowVolunteers, `minimumBetween`= :minimumBetween, `nameSelection` = :nameSelection WHERE `id`= :period;";
     $writeStudent_sql = "UPDATE `STUDENTS` SET `coefficient` = :coefficient, `enabled` = :enabled, `absent` = :absent, `absentDate` = :date WHERE `id` = :id;";
 
     $timeZone = new DateTimeZone('America/Los_Angeles');
@@ -30,7 +30,7 @@ function handlepost() {
             exit;
             break;
         case "updatePeriodPrefs":
-            $post_db->prepare($updatePeriodPrefs_sql)->execute(['period' => $_POST['period'], 'minimumBetween' => $_POST['minimumBetween'],'nameSelection' => $_POST['nameSelection'], 'allowVolunteers' => $_POST['allowVolunteers'], 'allowRepeats' => $_POST['allowRepeats']]);
+            $post_db->prepare($updatePeriodPrefs_sql)->execute(['period' => $_POST['period'], 'minimumBetween' => $_POST['minimumBetween'],'nameSelection' => $_POST['nameSelection'], 'allowVolunteers' => $_POST['allowVolunteers']]);
             exit;
             break;
         case "writeStudent":

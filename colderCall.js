@@ -1,15 +1,16 @@
 
-function writeStudent(id)
+function writeStudent(index)
 {
+    const id = getIDbyIndex(index);
     const statusBarText = $("#statusBar").html();
     $("#statusBar").html(statusBarText+'<div class="spinner-border spinner-border-sm"></div>');
     $.post("random.php",
         {
             action: "writeStudent",
             id: id,
-            enabled: students[getIndexByID(id)]["enabled"],
-            absent: students[getIndexByID(id)]["absent"],
-            coefficient: students[getIndexByID(id)]["coefficient"]
+            enabled: students[index]["enabled"],
+            absent: students[index]["absent"],
+            coefficient: students[index]["coefficient"]
         }, () => {$("#statusBar").html(statusBarText);});
 }
 
@@ -22,7 +23,7 @@ function toggleStudentEnabled(index)
 function saveEnabled() {
     for(let i in students) {
         if (students[i]["period"] === currentPeriod) {
-            writeStudent(getIDbyIndex(i));
+            writeStudent(i);
         }
     }
 }
@@ -31,7 +32,7 @@ function saveEnabled() {
 function toggleStudentAbsent(index) {
     if (index !== 0) {
         students[index]["absent"] === true ? students[index]["absent"] = false : students[index]["absent"] = true;
-        writeStudent(getIDbyIndex(index));
+        writeStudent(index);
         updateTable();
     }
 }
@@ -46,7 +47,7 @@ function getIndexByID(idno)
 function updateBias(index)
 {
     students[index]["coefficient"] = $('#slide'+index).val();
-    writeStudent(getIDbyIndex(index));
+    writeStudent(index);
 
 }
 
@@ -144,8 +145,8 @@ function writePeriodPrefs(period) {
 function toggleVolunteers(period)
 {
     periodPreferences[period]["allowVolunteers"] === true ? periodPreferences[period]["allowVolunteers"] = false:periodPreferences[period]["allowVolunteers"] = true;
-    updatePrefs();
-    writePrefs();
+    //updatePrefs();
+    writePeriodPrefs(period);
 }
 
 function changePeriod (period) {
@@ -202,16 +203,17 @@ function periodPref(period)
         + ');"><div class="form-check-inline"><label class="form-check-label"><input type="radio" class="form-check-input" name="nameSelectRadios'
         + period
         + '" value=3>First & Last Name</label></div><div class="form-check-inline"><label class="form-check-label">'
-        + '<input type="radio" class="form-check-input" name="nameSelectRadios" value=5>First Name & Last Initial</label></div><div class="form-check-inline disabled"><label class="form-check-label"><input type="radio" class="form-check-input" name="nameSelectRadios" value=1>First Name Only</label></div></div></td></tr>'
+        + '<input type="radio" class="form-check-input disabled" name="nameSelectRadios" value=5>First Name & Last Initial</label></div><div class="form-check-inline disabled"><label class="form-check-label"><input type="radio" class="form-check-input disabled" name="nameSelectRadios" value=1>First Name Only</label></div></div></td></tr>'
         + '<tr><td>Include Volunteer<td><div class="form-check-inline"><label class="form-check-label"><input type="checkbox" onclick="toggleVolunteers(' +
         + period
-        + ');" class="form-check-input"'
+        + ');" class="form-check-input "'
         + ((periodPreferences[period]["allowVolunteers"])? "checked":"unchecked")
         + ' id="allowVolunteersCheckBox'
         + period
         + '"></label></div></td></tr></div></tbody></table></div>'
     );
-    $('input[name=nameSelectRadios'+period+'][value='+periodPreferences[period]["nameSelection"]+']').prop("checked",true);
+    $('input[name=nameSelectRadios'+period+']').addClass("disabled");
+    $('input[name=nameSelectRadios'+period+'][value='+periodPreferences[period]["nameSelection"]+']').addClass("enabled");
     $('#betweenSlide'+period).val(periodPreferences[period]["minimumBetween"]);
     $('#minimumBetweenDisplay'+period).text($('#betweenSlide'+period).val());
 }
@@ -258,8 +260,8 @@ function updateMinText(period)
 
 function updateMin(period)
 {
-    periodPreferences[period]["minimumBetween"] = $('#defaultPeriodSelector'+period).val();
-    writePeriodPrefs();
+    periodPreferences[period]["minimumBetween"] = $('#betweenSlide'+period).val();
+    writePeriodPrefs(period);
 }
 
 //
