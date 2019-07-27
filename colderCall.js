@@ -179,12 +179,13 @@ function periodPref(period)
         + '" data-toggle="tab" href="" role="tab">Period '
         + period
         + '</a></li>');
-    // All of this has to be made programmatic for each period
     $("#prefsTabsContent").append('<div class="tab-pane fade" id="periodPrefs'
         + period
         + '" role="tabpanel"><div class="table-responsive-sm border" id="periodPrefTable' +
         + period
-        + '"><table class="table table-hover"><thead class="thead-light"><tr><th>Preference Name</th><th>Setting</th></tr></thead><tbody id="periodPrefTableItems'
+        + '"><table class="table table-hover"><thead class="thead-light"><tr><th>Period '
+        + period
+        + ' Preference Name</th><th>Setting</th></tr></thead><tbody id="periodPrefTableItems'
         + period
         + '"></div><tr><td>Minimum calls before repeat</td>'
         + '<td><div class="slidecontainer"><input type="range" oninput="updateMinText('
@@ -216,14 +217,17 @@ function periodPref(period)
 }
 
 function updatePrefs () {
+    $("#prefsTabs").html('<li class="nav-item" id="globalPrefsTab"><a class="nav-link active" id="globalPrefsTabLink" data-toggle="tab" href="" role="tab">Global Preferences</a></li>');
+    $("#prefsTabsContent").html('<div class="tab-pane fade show active" id="globalPrefs" role="tabpanel"><div class="table-responsive-sm border" id="preferencesTable"><table class="table table-hover"><thead class="thead-light"><tr><th>Preference Name</th><th>Setting</th></tr></thead><tbody id="preferencesTableItems"></tbody>                  </table> </div></div>');
     for (let i=1; i < globalPreferences["numPeriods"] + 1; i++){
         periodPref(i);
-        $('#periodPrefsTab'+1).on('click', function (e) {
+        $('#periodPrefsTab'+i).on('click', function (e) {
             e.preventDefault();
             //hide all tabs
             $(".tab-pane").hide();
-            $('#periodPrefs'+i).show();
             $('#periodPrefs'+i).tab('show');
+            $('#periodPrefs'+i).fadeIn('fast');
+
         });
     }
     //Erase what's there and draw again
@@ -292,10 +296,7 @@ function selectStudent2 (period) {
 
     //Pop enough off the lastID list (preferences can change)
     let present = Object.keys(studentsSelectable).length;
-    $("#statusBar").text("Total Present: " + present);
-    $("#statusBar").append(periodPreferences[period]["allowVolunteers"] ? " (including Volunteer)": " ");
-
-
+    $("#statusBar").text("Total Present: " + present).append(periodPreferences[period]["allowVolunteers"] ? " (including Volunteer)": " ");
 
     //People in the lastID, less the last one we just popped off, are out.
     //This has to go after the stuff above because those people will not be included again.

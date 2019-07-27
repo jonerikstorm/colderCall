@@ -94,9 +94,9 @@ $(document).ready(function () {
 
     $('#globalPrefsTab').on('click', function (e) {
         e.preventDefault();
-        $(".tab-pane").hide();
+        $(".tab-pane").fadeOut('fast');
         $("#globalPrefs").tab('show');
-        $("#globalPrefs").show();
+        $("#globalPrefs").fadeIn('fast');
 
     });
 
@@ -168,17 +168,17 @@ $(document).ready(function () {
 
     //The table button toggles the appearance of the student table
     $("#tableButton").click(function () {
-        $("#bigTable").toggle();
+        $("#bigTable").fadeToggle();
     });
 
     //The preferences button shows the preferences tabs
     $("#prefsButton").click(function () {
-        $("#prefsContent").toggle();
+        $("#prefsContent").fadeToggle();
     });
 
     //The preferences button shows the preferences tabs
     $("#globalPrefLink").click(function () {
-        $("#globalPrefs").toggle();
+        $("#globalPrefs").fadeToggle();
     });
 
 
@@ -225,25 +225,9 @@ $(document).ready(function () {
     <div class="row">
         <div class="col" id="prefsContent">
             <ul class="nav nav-tabs" id="prefsTabs">
-                <li class="nav-item" id="globalPrefsTab">
-                    <a class="nav-link active" id="globalPrefsTabLink" data-toggle="tab" href="" role="tab">Global Preferences</a>
-                </li>
+
             </ul>
             <div class="tab-content" id="prefsTabsContent">
-                <div class="tab-pane fade show active" id="globalPrefs" role="tabpanel">
-                    <div class="table-responsive-sm border" id="preferencesTable">
-                        <table class="table table-hover">
-                            <thead class="thead-light">
-                            <tr>
-                                <th>Preference Name</th>
-                                <th>Setting</th>
-                            </tr>
-                            </thead>
-                            <tbody id="preferencesTableItems"></tbody>
-                        </table>
-                    </div>
-                </div>
-
             </div>
         </div>
     </div>
