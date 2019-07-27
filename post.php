@@ -4,7 +4,8 @@ function handlepost() {
     $answer_sql = "INSERT INTO `ANSWERS` (`timestamp`,`student_id`,`correct`) VALUES(:timestamp,:student_id,:isCorrect);";
     $incrementCorrect_sql = "UPDATE `STUDENTS` SET `correct` = :correcto WHERE `id`=:id;";
     $incrementIncorrect_sql = "UPDATE `STUDENTS` SET `incorrect` = :incorrecto WHERE `id` = :id;";
-    $updatePrefs_sql = "UPDATE `userPreferences` SET `numPeriods` = :numPeriods, `defaultPeriod` = :defaultPeriod, `allowVolunteers` = :allowVolunteers, `allowRepeats` = :allowRepeats, `minimumBetween`= :minimumBetween, `nameSelection` = :nameSelection;";
+    $updateGlobalPrefs_sql = "UPDATE `globalPreferences` SET `numPeriods` = :numPeriods, `defaultPeriod` = :defaultPeriod WHERE `id` = 0;";
+    $updatePeriodPrefs_sql = "UPDATE `userPreferences` SET `allowVolunteers` = :allowVolunteers, `allowRepeats` = :allowRepeats, `minimumBetween`= :minimumBetween, `nameSelection` = :nameSelection WHERE `id` = :period;";
     $writeStudent_sql = "UPDATE `STUDENTS` SET `coefficient` = :coefficient, `enabled` = :enabled, `absent` = :absent, `absentDate` = :date WHERE `id` = :id;";
 
     $timeZone = new DateTimeZone('America/Los_Angeles');
@@ -24,8 +25,12 @@ function handlepost() {
             $post_db->prepare($answer_sql)->execute(['student_id' => $_POST['student_id'], 'timestamp' => $dt->format(DateTimeInterface::W3C ), 'isCorrect' => $_POST['isCorrect']]);
             exit;
             break;
-        case "updatePrefs":
-            $post_db->prepare($updatePrefs_sql)->execute(['minimumBetween' => $_POST['minimumBetween'],'nameSelection' => $_POST['nameSelection'], 'numPeriods' => $_POST['numPeriods'],'defaultPeriod' => $_POST['defaultPeriod'], 'allowVolunteers' => $_POST['allowVolunteers'], 'allowRepeats' => $_POST['allowRepeats']]);
+        case "updateGlobalPrefs":
+            $post_db->prepare($updateGlobalPrefs_sql)->execute(['numPeriods' => $_POST['numPeriods'], 'defaultPeriod' => $_POST['defaultPeriod']]);
+            exit;
+            break;
+        case "updatePeriodPrefs":
+            $post_db->prepare($updatePeriodPrefs_sql)->execute(['period' => $_POST['period'], 'minimumBetween' => $_POST['minimumBetween'],'nameSelection' => $_POST['nameSelection'], 'allowVolunteers' => $_POST['allowVolunteers'], 'allowRepeats' => $_POST['allowRepeats']]);
             exit;
             break;
         case "writeStudent":

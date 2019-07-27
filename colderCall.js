@@ -58,7 +58,7 @@ function getIDbyIndex(idxno)
     }
 }
 
-function updateTable () {
+function updateTable() {
     //Erase what's there.
     $("#studentTable").empty();
     for (let i in students) {
@@ -117,24 +117,33 @@ function updateBiasText(index)
 //
 //
 //
-function writePrefs() {
+function writeGlobalPrefs() {
     const statusBarText = $("#statusBar").html();
     $("#statusBar").html(statusBarText+'<div class="spinner-border spinner-border-sm"></div>');
     $.post("random.php",
         {
-            action: "updatePrefs",
-            defaultPeriod: userPreferences["defaultPeriod"],
-            allowVolunteers: userPreferences["allowVolunteers"],
-            allowRepeats: userPreferences["allowRepeats"],
-            numPeriods: userPreferences["numPeriods"],
-            minimumBetween: userPreferences["minimumBetween"],
-            nameSelection: userPreferences["nameSelection"]
+            action: "updateGlobalPrefs",
+            defaultPeriod: globalPreferences["defaultPeriod"],
+            numPeriods: globalPreferences["numPeriods"]
+        },  () => {$("#statusBar").html(statusBarText);});
+}
+function writePeriodPrefs(period) {
+    const statusBarText = $("#statusBar").html();
+    $("#statusBar").html(statusBarText+'<div class="spinner-border spinner-border-sm"></div>');
+    $.post("random.php",
+        {
+            action: "updatePeriodPrefs",
+            period: period,
+            allowVolunteers: periodPreferences[period]["allowVolunteers"],
+            allowRepeats: periodPreferences[period]["allowRepeats"],
+            minimumBetween: periodPreferences[period]["minimumBetween"],
+            nameSelection: periodPreferences[period]["nameSelection"]
         },  () => {$("#statusBar").html(statusBarText);});
 }
 
 function toggleVolunteers(period)
 {
-    userPreferences["allowVolunteers"] === true ? userPreferences["allowVolunteers"] = false:userPreferences["allowVolunteers"] = true;
+    periodPreferences[period]["allowVolunteers"] === true ? periodPreferences[period]["allowVolunteers"] = false:periodPreferences[period]["allowVolunteers"] = true;
     updatePrefs();
     writePrefs();
 }
@@ -147,7 +156,7 @@ function changePeriod (period) {
 function periodMenuDropDownf() {
 //Erase what's there.
     $("#periodDropDownMenu").empty();
-    for (let i=1; (i-1) < userPreferences.numPeriods;i++) {
+    for (let i=1; (i-1) < globalPreferences.numPeriods;i++) {
 
         $("#periodDropDownMenu").append('<span class="dropdown-item" onclick="changePeriod('
             + i
@@ -196,18 +205,18 @@ function periodPref(period)
         + '<tr><td>Include Volunteer<td><div class="form-check-inline"><label class="form-check-label"><input type="checkbox" onclick="toggleVolunteers(' +
         + period
         + ');" class="form-check-input"'
-        + ((userPreferences["allowVolunteers"])? "checked":"unchecked")
+        + ((periodPreferences[period]["allowVolunteers"])? "checked":"unchecked")
         + ' id="allowVolunteersCheckBox'
         + period
         + '"></label></div></td></tr></div></tbody></table></div>'
     );
-    $('input[name=nameSelectRadios'+period+'][value='+userPreferences.nameSelection+']').prop("checked",true);
-    $('#betweenSlide'+period).val(userPreferences["minimumBetween"]);
+    $('input[name=nameSelectRadios'+period+'][value='+periodPreferences[period]["nameSelection"]+']').prop("checked",true);
+    $('#betweenSlide'+period).val(periodPreferences[period]["minimumBetween"]);
     $('#minimumBetweenDisplay'+period).text($('#betweenSlide'+period).val());
 }
 
 function updatePrefs () {
-    for (let i=1; i < userPreferences["numPeriods"] + 1; i++){
+    for (let i=1; i < globalPreferences["numPeriods"] + 1; i++){
         periodPref(i);
         $('#periodPrefsTab'+1).on('click', function (e) {
             e.preventDefault();
@@ -225,12 +234,12 @@ function updatePrefs () {
         +'<select class="form-control-sm" id="numPeriodSelector" onchange="updateNumPeriods();"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select></div>'
         +'</td></tr>'
     );
-    $("#defaultPeriodSelector").val(userPreferences["defaultPeriod"]);
-    $("#numPeriodSelector").val(userPreferences["numPeriods"]);
+    $("#defaultPeriodSelector").val(globalPreferences["defaultPeriod"]);
+    $("#numPeriodSelector").val(globalPreferences["numPeriods"]);
 }
 
 function updateNameSelection(period) {
-    userPreferences["nameSelection"] = $('input[name=nameSelectRadios'+period+']:checked').val();
+    periodPreferences[period]["nameSelection"] = $('input[name=nameSelectRadios'+period+']:checked').val();
     writePrefs();
 }
 
@@ -245,25 +254,28 @@ function updateMinText(period)
 
 function updateMin(period)
 {
-    userPreferences["minimumBetween"] = $('#defaultPeriodSelector'+period).val();
-    writePrefs();
+    periodPreferences[period]["minimumBetween"] = $('#defaultPeriodSelector'+period).val();
+    writePeriodPrefs();
 }
 
-
+//
+// Handle global perfefences
+//
 function updateNumPeriods()
 {
-    userPreferences["numPeriods"] = $("#numPeriodSelector").val();
-    writePrefs();
+    globalPreferences["numPeriods"] = $("#numPeriodSelector").val();
+    writeGlobalPrefs();
     periodMenuDropDownf();
 }
 
 function updatePeriod()
 {
-    userPreferences["defaultPeriod"] = $("#defaultPeriodSelector").val();
-    writePrefs();
+    globalPreferences["defaultPeriod"] = $("#defaultPeriodSelector").val();
+    writeGlobalPrefs();
 }
+
 //
-//
+// Student selection routine
 //
 function selectStudent2 (period) {
     // Since we don't want to write to the original list and we need to keep it global, we have to use this hack to make a copy.
@@ -276,12 +288,12 @@ function selectStudent2 (period) {
     let studentsSelectable = studentsCopy.filter((value,index,array) => {return (array[index]["period"] === period && array[index]["enabled"] && !array[index]["absent"]);});
 
     //Stick Volunteer at the beginning if enabled
-    if (userPreferences["allowVolunteers"]) {studentsSelectable.unshift(volunteer);}
+    if (periodPreferences[period]["allowVolunteers"]) {studentsSelectable.unshift(volunteer);}
 
     //Pop enough off the lastID list (preferences can change)
     let present = Object.keys(studentsSelectable).length;
     $("#statusBar").text("Total Present: " + present);
-    $("#statusBar").append(userPreferences["allowVolunteers"] ? " (including Volunteer)": " ");
+    $("#statusBar").append(periodPreferences[period]["allowVolunteers"] ? " (including Volunteer)": " ");
 
 
 
@@ -324,18 +336,18 @@ function selectStudent2 (period) {
     }
 
     //If the user preference goes lower, we can go lower.
-    while (lastID.length >= userPreferences["minimumBetween"]) {
+    while (lastID.length >= periodPreferences[period]["minimumBetween"]) {
         lastID.pop();
     }
     lastID.unshift(winner);
     for (let i=0;i < Object.keys(studentsSelectable).length; i++) {
         if (winner === studentsSelectable[i]["id"]) {
             let output =  studentsSelectable[i]["f_name"];
-            if (userPreferences.nameSelection === 3) {
+            if (periodPreferences[period]['nameSelection'] === 3) {
                 output += " ";
                 output += studentsSelectable[i]["l_name"];
             }
-            if (userPreferences.nameSelection === 5) {
+            if (periodPreferences[period]['nameSelection'] === 5) {
                 output += " ";
                 output += studentsSelectable[i]["l_name"][0];
                 if(i!==0) {
@@ -347,6 +359,6 @@ function selectStudent2 (period) {
         }
     }
 
-//throw("Bummer.");
+throw("Bummer.");
 
 }

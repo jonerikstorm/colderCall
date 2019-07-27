@@ -18,7 +18,8 @@ if (!$_POST) {
         echo $e->getMessage();
         exit;
     }
-    $userPrefs = $db->query("SELECT * FROM `userPreferences`;")->fetchAll(PDO::FETCH_ASSOC);
+    $globalPrefs = $db->query("SELECT * FROM `globalPreferences`;")->fetchAll(PDO::FETCH_ASSOC);
+    $periodPrefs = $db->query("SELECT * FROM `periodPreferences`;")->fetchAll(PDO::FETCH_OBJ);
     $students =  $db->query("SELECT * FROM `STUDENTS`;")->fetchAll(PDO::FETCH_OBJ);
     //Check if the students were absent today or earlier. If earlier, reset absence.
     $timeZone = new DateTimeZone('America/Los_Angeles');
@@ -38,7 +39,7 @@ if (!$_POST) {
 
 // Use $_GET to specify period so we can bookmark it. If someone is trying to get a number greater than
 // The number of periods set in the prefs, we ignore it. 99 comes through as meaning just load the default set in the prefs.
-if(isset($_GET['p']) && ($_GET['p'] <= $userPrefs[0]['numPeriods'])) {
+if(isset($_GET['p']) && ($_GET['p'] <= $globalPrefs[0]['numPeriods'])) {
     $getPeriod = $_GET['p'];
 }  else {
     $getPeriod = 99;
@@ -46,7 +47,7 @@ if(isset($_GET['p']) && ($_GET['p'] <= $userPrefs[0]['numPeriods'])) {
 ?>
 <html lang="en-us">
 <head>
-<title>colderCalls <?php echo $userPrefs[0]['version']; ?></title>
+<title>colderCalls <?php echo $globalPrefs[0]['version']; ?></title>
 <meta charset="utf-8">
 <meta content="width=device-width, initial-scale=1" name="viewport">
 <link href="static/bootstrap-4.3.1-dist/css/bootstrap.min.css" rel="stylesheet">
@@ -62,9 +63,12 @@ if(isset($_GET['p']) && ($_GET['p'] <= $userPrefs[0]['numPeriods'])) {
 
 //Get the student data from the database via PHP
 let students = JSON.parse('<?php echo json_encode($students,JSON_NUMERIC_CHECK ); ?>',(k, v) => v === "true" ? true : v === "false" ? false : v);
+let periodPreferences = JSON.parse('<?php echo json_encode($periodPrefs,JSON_NUMERIC_CHECK ); ?>',(k, v) => v === "true" ? true : v === "false" ? false : v);
+// This should make the period preferences indexes correspond with their number, saving a lot of headache.
+periodPreferences.unshift(null);
 
 //Have PHP write in the preferences from the database into a JSON array
-let userPreferences = JSON.parse('<?php echo json_encode($userPrefs[0], JSON_NUMERIC_CHECK); ?>',(k, v) => v === "true" ? true : v === "false" ? false : v);
+let globalPreferences = JSON.parse('<?php echo json_encode($globalPrefs[0], JSON_NUMERIC_CHECK); ?>',(k, v) => v === "true" ? true : v === "false" ? false : v);
 let currentPeriod;
 let lastID = new Array;
 
@@ -72,7 +76,7 @@ let lastID = new Array;
 let getPeriod = <?php echo $getPeriod ?>;
 if (getPeriod===99)
     {
-        currentPeriod = userPreferences["defaultPeriod"];
+        currentPeriod = globalPreferences["defaultPeriod"];
     } else {
     currentPeriod = getPeriod;
 }
