@@ -244,7 +244,7 @@ function updatePrefs () {
 
 function updateNameSelection(period) {
     periodPreferences[period]["nameSelection"] = $('input[name=nameSelectRadios'+period+']:checked').val();
-    writePrefs();
+    writePeriodPrefs(period);
 }
 
 function updateMinText(period)
