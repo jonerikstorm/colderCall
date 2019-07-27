@@ -129,7 +129,8 @@ $(document).ready(function () {
             }
             updateTable();
         }
-        $("#victim").html(selectStudent2(currentPeriod));
+       $("#victim").html(selectStudent2(currentPeriod));
+
     });
 
     //Hook the action of the incorrect button to pickign a new person, updating their incorrect tally
@@ -157,6 +158,7 @@ $(document).ready(function () {
 
         updateTable();
         $("#victim").html(selectStudent2(currentPeriod));
+
     });
 
     //The skip button just gets a new student
@@ -190,9 +192,7 @@ $(document).ready(function () {
 <div class="container-fluid">
     <div class="row">
         <div class="col">
-            <div class="jumbotron-fluid">
-                <div class="display-2" style="text-align:center" id="victim"></div>
-            </div>
+            <div class="jumbotron-fluid" id="victim" style="font-size: 10vw; text-align: center; width: 98%"></div>
         </div>
     </div>
     <div class="row">
@@ -231,22 +231,17 @@ $(document).ready(function () {
             </ul>
             <div class="tab-content" id="prefsTabsContent">
                 <div class="tab-pane fade show active" id="globalPrefs" role="tabpanel">
-                   <!-- <div class="row">
-                        <div class="col"> -->
-                            <div class="table-responsive-sm border" id="preferencesTable">
-                                <table class="table table-hover">
-                                    <thead class="thead-light">
-                                    <tr>
-                                        <th>Preference Name</th>
-                                        <th>Setting</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody id="preferencesTableItems"></tbody>
-                                </table>
-                            </div>
-                    <!--    </div>
-                    </div> -->
-
+                    <div class="table-responsive-sm border" id="preferencesTable">
+                        <table class="table table-hover">
+                            <thead class="thead-light">
+                            <tr>
+                                <th>Preference Name</th>
+                                <th>Setting</th>
+                            </tr>
+                            </thead>
+                            <tbody id="preferencesTableItems"></tbody>
+                        </table>
+                    </div>
                 </div>
 
             </div>
