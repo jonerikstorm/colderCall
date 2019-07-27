@@ -46,20 +46,20 @@ if(isset($_GET['p']) && ($_GET['p'] <= $userPrefs[0]['numPeriods'])) {
 ?>
 <html lang="en-us">
 <head>
-<title>colderCalls <?php echo $userPrefs->version; ?></title>
+<title>colderCalls <?php echo $userPrefs[0]['version']; ?></title>
 <meta charset="utf-8">
 <meta content="width=device-width, initial-scale=1" name="viewport">
 <link href="static/bootstrap-4.3.1-dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="static/jquery-3.4.1.min.js"></script>
 <script src="static/popper.js"></script>
 <script src="static/bootstrap-4.3.1-dist/js/bootstrap.min.js"></script>
-<script src="select.js"></script><script src="prefs.js"></script><script src="students.js"></script>
-<script src="select.js"></script>
+<script src="colderCall.js"></script>
 <script>
-    // All we are going to do here is handle the DOM ready function.
+// All we are going to do here is handle the DOM ready function.
 "use strict";
 // These are all the globals: the student table, the user preferneces, the current period, and the array of recently
-    // called kiddos
+// called kiddos
+
 //Get the student data from the database via PHP
 let students = JSON.parse('<?php echo json_encode($students,JSON_NUMERIC_CHECK ); ?>',(k, v) => v === "true" ? true : v === "false" ? false : v);
 
@@ -77,7 +77,6 @@ if (getPeriod===99)
     currentPeriod = getPeriod;
 }
 
-
 //When the page loads we start with our first person and prepare the table, but hide it.
 $(document).ready(function () {
 
@@ -86,8 +85,19 @@ $(document).ready(function () {
     updateTable();
 
     //Initialize the preferences table
-    $("#preferencesTable").hide();
+    $("#prefsContent").hide();
     updatePrefs();
+
+    $('#globalPrefsTab').on('click', function (e) {
+        e.preventDefault();
+        $(".tab-pane").hide();
+        $("#globalPrefs").tab('show');
+        $("#globalPrefs").show();
+
+    });
+
+
+   // $("#1periodPrefsTab").on('click', (e) => {e.preventDefault(); $("#1periodPrefs").show();});
 
     //Pick the first victim on load
     $("#victim").html(selectStudent2(currentPeriod));
@@ -155,10 +165,16 @@ $(document).ready(function () {
         $("#bigTable").toggle();
     });
 
-    //The preferences button shows the preferences table
+    //The preferences button shows the preferences tabs
     $("#prefsButton").click(function () {
-        $("#preferencesTable").toggle();
+        $("#prefsContent").toggle();
     });
+
+    //The preferences button shows the preferences tabs
+    $("#globalPrefLink").click(function () {
+        $("#globalPrefs").toggle();
+    });
+
 
     //Programatically fill the period dropdown menu
     periodMenuDropDownf();
@@ -203,20 +219,36 @@ $(document).ready(function () {
         <div class="col" id="statusBar"></div>
     </div>
     <div class="row">
-        <div class="col">
-            <div class="table-responsive-sm border" id="preferencesTable">
-        <table class="table table-hover">
-            <thead class="thead-light">
-                    <tr>
-                            <th>Preference Name</th>
-                            <th>Setting</th>
-                    </tr>
-            </thead>
-            <tbody id="preferencesTableItems"></tbody>
-        </table>
-    </div>
+        <div class="col" id="prefsContent">
+            <ul class="nav nav-tabs" id="prefsTabs">
+                <li class="nav-item" id="globalPrefsTab">
+                    <a class="nav-link active" id="globalPrefsTabLink" data-toggle="tab" href="" role="tab">Global Preferences</a>
+                </li>
+            </ul>
+            <div class="tab-content" id="prefsTabsContent">
+                <div class="tab-pane fade show active" id="globalPrefs" role="tabpanel">
+                   <!-- <div class="row">
+                        <div class="col"> -->
+                            <div class="table-responsive-sm border" id="preferencesTable">
+                                <table class="table table-hover">
+                                    <thead class="thead-light">
+                                    <tr>
+                                        <th>Preference Name</th>
+                                        <th>Setting</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="preferencesTableItems"></tbody>
+                                </table>
+                            </div>
+                    <!--    </div>
+                    </div> -->
+
+                </div>
+
+            </div>
         </div>
     </div>
+
     <div class="row">
         <div class="col">
             <div class="table-responsive-sm border" id="bigTable">
