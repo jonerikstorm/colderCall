@@ -200,11 +200,14 @@ function periodPref(period)
         + period
         + '"></div></td></tr><tr><td>Name Format</td><td><div onclick="updateNameSelection('
         + period
-        + ');"><div class="form-check-inline"><label class="form-check-label"><input type="radio" class="form-check-input" name="nameSelectRadios'
+        + ');"><div class="form-check-inline"><input type="radio" class="form-check-input" name="nameSelectRadios'
         + period
-        + '" value=3>First & Last Name</label></div><div class="form-check-inline"><label class="form-check-label">'
-        + '<input type="radio" class="form-check-input disabled" name="nameSelectRadios" value=5>First Name & Last Initial</label></div><div class="form-check-inline disabled"><label class="form-check-label"><input type="radio" class="form-check-input disabled" name="nameSelectRadios" value=1>First Name Only</label></div></div></td></tr>'
-        + '<tr><td>Include Volunteer<td><div class="form-check-inline"><label class="form-check-label"><input type="checkbox" onclick="toggleVolunteers(' +
+        + '" value=3>First & Last Name</div><div class="form-check-inline"><input type="radio" class="form-check-input disabled" name="nameSelectRadios'
+        + period
+        + '" value=5>First Name & Last Initial</div><div class="form-check-inline disabled"><input type="radio" class="form-check-input disabled" name="nameSelectRadios'
+        + period
+        + '" value=1>First Name Only</div></div></td></tr>'
+        + '<tr><td>Include Volunteer<td><div class="form-check-inline"><label class="form-check-label"><input type="checkbox" onclick="toggleVolunteers('
         + period
         + ');" class="form-check-input "'
         + ((periodPreferences[period]["allowVolunteers"])? "checked":"unchecked")
@@ -212,8 +215,7 @@ function periodPref(period)
         + period
         + '"></label></div></td></tr></div></tbody></table></div>'
     );
-    $('input[name=nameSelectRadios'+period+']').addClass("disabled");
-    $('input[name=nameSelectRadios'+period+'][value='+periodPreferences[period]["nameSelection"]+']').addClass("enabled");
+    $('input[name=nameSelectRadios'+period+'][value='+periodPreferences[period]["nameSelection"]+']').prop("checked",true);
     $('#betweenSlide'+period).val(periodPreferences[period]["minimumBetween"]);
     $('#minimumBetweenDisplay'+period).text($('#betweenSlide'+period).val());
 }
@@ -283,7 +285,7 @@ function updatePeriod()
 //
 // Student selection routine
 //
-function selectStudent2 (period) {
+function selectStudent2 (period, periodLastID) {
     // Since we don't want to write to the original list and we need to keep it global, we have to use this hack to make a copy.
     let studentsCopy = JSON.parse(JSON.stringify(students));
 
@@ -303,9 +305,9 @@ function selectStudent2 (period) {
     //People in the lastID, less the last one we just popped off, are out.
     //This has to go after the stuff above because those people will not be included again.
     //These people are only temporarily out so we need to adjust the length of lastID accordingly
-    for (let i=0; i < Object.keys(lastID).length; i++) {
+    for (let i=0; i < Object.keys(periodLastID).length; i++) {
         for (let j = Object.keys(studentsSelectable).length - 1; j > -1;j--) {
-            if (studentsSelectable[j]["id"] === lastID[i]) {
+            if (studentsSelectable[j]["id"] === lastID[period][i]) {
                 studentsSelectable.splice(j, 1);
 
             }
@@ -334,15 +336,16 @@ function selectStudent2 (period) {
 
     //do we want this to persist? Maybe in $_SESSION?
     //This is the biggest the lastID list can be
-    while (lastID.length >= present) {
-        lastID.pop();
+    while (Object.keys(periodLastID).length >= present && Object.keys(periodLastID).length > 0) {
+        periodLastID.pop();
     }
 
     //If the user preference goes lower, we can go lower.
-    while (lastID.length >= periodPreferences[period]["minimumBetween"]) {
-        lastID.pop();
+    while (Object.keys(periodLastID).length >= periodPreferences[period]["minimumBetween"] && Object.keys(periodLastID).length > 0) {
+        periodLastID.pop();
     }
-    lastID.unshift(winner);
+    periodLastID.unshift(winner);
+    writeLastID(period, periodLastID);
     for (let i=0;i < Object.keys(studentsSelectable).length; i++) {
         if (winner === studentsSelectable[i]["id"]) {
             let output =  studentsSelectable[i]["f_name"];
@@ -364,4 +367,18 @@ function selectStudent2 (period) {
 
 throw("Bummer.");
 
+}
+
+function writeLastID(period, periodLastID)
+{
+    lastID[period] = periodLastID;
+    const statusBarText = $("#statusBar").html();
+    $("#statusBar").html(statusBarText+'<div class="spinner-border spinner-border-sm"></div>');
+    $.post("random.php",
+        {
+            action: "writeLastID",
+            lastID: JSON.stringify(lastID)
+        }, () => {
+            $("#statusBar").html(statusBarText);
+        });
 }

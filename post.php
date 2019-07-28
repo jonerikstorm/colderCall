@@ -1,12 +1,15 @@
 <?php
+
+
 function handlepost() {
 //all the SQLite3 queries we will use for AJAX
-    $answer_sql = "INSERT INTO `ANSWERS` (`timestamp`,`student_id`,`correct`) VALUES(:timestamp,:student_id,:isCorrect);";
+    $answer_sql = "INSERT INTO `ANSWERS` (`timestamp`,`student_id`,`correct`) VALUES( :timestamp, :student_id, :isCorrect);";
     $incrementCorrect_sql = "UPDATE `STUDENTS` SET `correct` = :correcto WHERE `id`=:id;";
     $incrementIncorrect_sql = "UPDATE `STUDENTS` SET `incorrect` = :incorrecto WHERE `id` = :id;";
     $updateGlobalPrefs_sql = "UPDATE `globalPreferences` SET `numPeriods` = :numPeriods, `defaultPeriod` = :defaultPeriod WHERE `id` = 0;";
     $updatePeriodPrefs_sql = "UPDATE `periodPreferences` SET `allowVolunteers` = :allowVolunteers, `minimumBetween`= :minimumBetween, `nameSelection` = :nameSelection WHERE `id`= :period;";
     $writeStudent_sql = "UPDATE `STUDENTS` SET `coefficient` = :coefficient, `enabled` = :enabled, `absent` = :absent, `absentDate` = :date WHERE `id` = :id;";
+    $lastID_sql = "REPLACE INTO `globalPreferences` (`lastID`) VALUES (:lastID);";
 
     $timeZone = new DateTimeZone('America/Los_Angeles');
     $dt = new DateTime();
@@ -31,6 +34,10 @@ function handlepost() {
             break;
         case "updatePeriodPrefs":
             $post_db->prepare($updatePeriodPrefs_sql)->execute(['period' => $_POST['period'], 'minimumBetween' => $_POST['minimumBetween'],'nameSelection' => $_POST['nameSelection'], 'allowVolunteers' => $_POST['allowVolunteers']]);
+            exit;
+            break;
+        case "writeLastID":
+            $post_db->prepare($lastID_sql)->execute(['lastID' => $_POST['lastID']] );
             exit;
             break;
         case "writeStudent":

@@ -18,6 +18,8 @@ if (!$_POST) {
         echo $e->getMessage();
         exit;
     }
+    //$lastID = $db->query("SELECT `lastID` FROM `globalPreferences`;")->fetch();
+    $lastID = '[{},{"null":null},{}]';
     $globalPrefs = $db->query("SELECT * FROM `globalPreferences`;")->fetchAll(PDO::FETCH_ASSOC);
     $periodPrefs = $db->query("SELECT * FROM `periodPreferences`;")->fetchAll(PDO::FETCH_OBJ);
     $students =  $db->query("SELECT * FROM `STUDENTS`;")->fetchAll(PDO::FETCH_OBJ);
@@ -64,13 +66,14 @@ if(isset($_GET['p']) && ($_GET['p'] <= $globalPrefs[0]['numPeriods'])) {
 //Get the student data from the database via PHP
 let students = JSON.parse('<?php echo json_encode($students,JSON_NUMERIC_CHECK ); ?>',(k, v) => v === "true" ? true : v === "false" ? false : v);
 let periodPreferences = JSON.parse('<?php echo json_encode($periodPrefs,JSON_NUMERIC_CHECK ); ?>',(k, v) => v === "true" ? true : v === "false" ? false : v);
+let lastID = JSON.parse('<?php echo $lastID; ?>');
 // This should make the period preferences indexes correspond with their number, saving a lot of headache.
 periodPreferences.unshift(null);
 
 //Have PHP write in the preferences from the database into a JSON array
 let globalPreferences = JSON.parse('<?php echo json_encode($globalPrefs[0], JSON_NUMERIC_CHECK); ?>',(k, v) => v === "true" ? true : v === "false" ? false : v);
 let currentPeriod;
-let lastID = new Array;
+
 
 //GET overrides user default. 99 means use prefs
 let getPeriod = <?php echo $getPeriod ?>;
@@ -104,7 +107,7 @@ $(document).ready(function () {
    // $("#1periodPrefsTab").on('click', (e) => {e.preventDefault(); $("#1periodPrefs").show();});
 
     //Pick the first victim on load
-    $("#victim").html(selectStudent2(currentPeriod));
+    $("#victim").html(selectStudent2(currentPeriod, Array.from(lastID[currentPeriod])));
 
     //Hook the action of the correct button to choosing a new person, updating their correct tally
     //Don't try and update the Volunteer's count
@@ -114,7 +117,7 @@ $(document).ready(function () {
 
             for (let i in students) {
                 $("#statusBar").html(statusBarText+'<div class="spinner-border spinner-border-sm"></div>');
-                if (students[i]["id"] === lastID[Object.keys(lastID).length - 1]) {
+                if (students[i]["id"] === lastID[currentPeriod][Object.keys(lastID).length - 1]) {
                     students[i]["correct"]++;
                     $.post("random.php",
                         {
@@ -129,7 +132,7 @@ $(document).ready(function () {
             }
             updateTable();
         }
-       $("#victim").html(selectStudent2(currentPeriod));
+       $("#victim").html(selectStudent2(currentPeriod, Array.from(lastID[currentPeriod])));
 
     });
 
@@ -157,13 +160,13 @@ $(document).ready(function () {
         }
 
         updateTable();
-        $("#victim").html(selectStudent2(currentPeriod));
+        $("#victim").html(selectStudent2(currentPeriod, lastID[currentPeriod]));
 
     });
 
     //The skip button just gets a new student
     $("#skipButton").click(function () {
-        $("#victim").html(selectStudent2(currentPeriod));
+        $("#victim").html(selectStudent2(currentPeriod, lastID[currentPeriod]));
     });
 
     //The table button toggles the appearance of the student table
@@ -215,7 +218,7 @@ $(document).ready(function () {
                 </div>
             </div>
             <div class="btn-group float-right">
-             <button class="btn btn-outline-danger" id="absentButton" type="button" onclick="toggleStudentAbsent(getIndexByID(lastID[Object.keys(lastID).length - 1]));">Mark Absent</button>
+             <button class="btn btn-outline-danger" id="absentButton" type="button" onclick="toggleStudentAbsent(getIndexByID(lastID[0]));">Mark Absent</button>
             </div>
         </div>
     </div>
