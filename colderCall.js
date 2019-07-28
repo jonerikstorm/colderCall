@@ -217,7 +217,7 @@ function periodPref(period)
     );
     $('input[name=nameSelectRadios'+period+'][value='+periodPreferences[period]["nameSelection"]+']').prop("checked",true);
     $('#betweenSlide'+period).val(periodPreferences[period]["minimumBetween"]);
-    $('#minimumBetweenDisplay'+period).text($('#betweenSlide'+period).val());
+    updateMinText(period);
 }
 
 function updatePrefs () {
