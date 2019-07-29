@@ -1,5 +1,21 @@
-   { 
-      "dependencies": {
+   {
+     "name": "colderCall",
+     "version": "0.3.0",
+     "description": "A web-based tool for calling on random students to enhance checks for understanding.",
+     "keywords": ["education", "teaching", "checks for understanding"],
+     "maintainers": [{
+      "name": "Jon-Erik G. Storm",
+      "email": "jon-erik.storm@lmusd.org",
+       }],
+     "repositories"	: [{
+       "type": "git",
+       "url": "https://github.com/jonerikstorm/colderCall.git"
+     }],
+     "licenses": [{
+       "name": "MIT",
+       "url": "http://www.opensource.org/licenses/mit-license.php"
+     }],
+     "dependencies": {
         "jquery": "=3.4.1",
         "bootstrap": "=4.3.1"
        }
