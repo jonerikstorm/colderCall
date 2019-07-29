@@ -1,13 +1,13 @@
 
 function writeStudent(index)
 {
-    const id = getIDbyIndex(index);
+    let id = getIDbyIndex(index);
     const statusBarText = $("#statusBar").html();
     $("#statusBar").html(statusBarText+'<div class="spinner-border spinner-border-sm"></div>');
     $.post("random.php",
         {
             action: "writeStudent",
-            id: id,
+            id: students[index]["id"],
             enabled: students[index]["enabled"],
             absent: students[index]["absent"],
             coefficient: students[index]["coefficient"]
@@ -21,32 +21,33 @@ function toggleStudentEnabled(index)
 }
 
 function saveEnabled() {
-    for(let i in students) {
+    const statusBarText = $("#statusBar").html();
+    for(let i=0; i <Object.keys(students).length; i++) {
         if (students[i]["period"] === currentPeriod) {
             writeStudent(i);
         }
     }
+    $("#statusBar").html(statusBarText);
+    updateTable();
 }
 
 
 function toggleStudentAbsent(index) {
-    if (index !== 0) {
         students[index]["absent"] === true ? students[index]["absent"] = false : students[index]["absent"] = true;
         writeStudent(index);
         updateTable();
-    }
 }
 
 function getIndexByID(idno)
 {
-    for (let i in students) {
+    for (let i=0; i <Object.keys(students).length; i++) {
         if (students[i]["id"] === idno) { return i;}
     }
 }
 
 function updateBias(index)
 {
-    students[index]["coefficient"] = $('#slide'+index).val();
+    students[index]["coefficient"] = $('#biasSlide'+index).val();
     writeStudent(index);
 
 }
@@ -54,15 +55,13 @@ function updateBias(index)
 
 function getIDbyIndex(idxno)
 {
-    for (let i in students) {
-        if (idxno === students[i]["id"]) { return students[i]["id"];}
-    }
+     return students[idxno]["id"];
 }
 
 function updateTable() {
     //Erase what's there.
     $("#studentTable").empty();
-    for (let i in students) {
+    for (let i=0; i <Object.keys(students).length; i++) {
         if (students[i]["period"] === currentPeriod) {
             $("#studentTable").append("<tr><td>" + students[i]["id"]
                 + "</td><td>"
@@ -346,6 +345,7 @@ function selectStudent2 (period, periodLastID) {
     }
     periodLastID.unshift(winner);
     writeLastID(period, periodLastID);
+    lastID[0] = period;
     for (let i=0;i < Object.keys(studentsSelectable).length; i++) {
         if (winner === studentsSelectable[i]["id"]) {
             let output =  studentsSelectable[i]["f_name"];

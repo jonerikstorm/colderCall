@@ -41,14 +41,14 @@ function handlepost() {
             exit;
             break;
         case "writeStudent":
-            $db_writeStudentArray = ['coefficient' => $_POST['coefficient'],
+            $db_writeStudentArrayBase = ['coefficient' => $_POST['coefficient'],
                 'absent' => $_POST['absent'],
-                'enabled' => $_POST['enabled']];
-            if ($_POST['absent']) {
-                array_push($db_writeStudentArray, ['date'=> $dt->format('Y-m-d')]);
+                'enabled' => $_POST['enabled'], 'id' => $_POST['id']];
+            if ($_POST['absent'] == "true") {
+                $db_writeStudentArray = $db_writeStudentArrayBase + ['date'=> $dt->format('Y-m-d')];
             }
             else {
-                array_push($db_writeStudentArray, ['date' => null]);
+                $db_writeStudentArray = $db_writeStudentArrayBase +  ['date' => null];
             }
             $post_db->prepare($writeStudent_sql)->execute($db_writeStudentArray);
             exit;

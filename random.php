@@ -113,11 +113,12 @@ $(document).ready(function () {
     //Don't try and update the Volunteer's count
     $("#correct").click(function () {
         const statusBarText = $("#statusBar").html();
-        if (lastID[0]["id"] !== 0) {
+        $("#statusBar").html(statusBarText+'<div class="spinner-border spinner-border-sm"></div>');
+        if (lastID[lastID[0]][0] !== 0) {
 
-            for (let i in students) {
-                $("#statusBar").html(statusBarText+'<div class="spinner-border spinner-border-sm"></div>');
-                if (students[i]["id"] === lastID[currentPeriod][Object.keys(lastID).length - 1]) {
+            for (let i=0; i <Object.keys(students).length; i++) {
+
+                if (students[i]["id"] === lastID[lastID[0]][0]) {
                     students[i]["correct"]++;
                     $.post("random.php",
                         {
@@ -140,11 +141,12 @@ $(document).ready(function () {
     //Don't try and update the Volunteer's count
     $("#incorrect").click(function () {
         const statusBarText = $("#statusBar").html();
-        if (lastID[0]["id"] !== 0) {
+        $("#statusBar").html(statusBarText+'<div class="spinner-border spinner-border-sm"></div>');
+        if (lastID[lastID[0]][0] !== 0) {
 
-            for (let i in students) {
-                $("#statusBar").html(statusBarText+'<div class="spinner-border spinner-border-sm"></div>');
-                if (students[i]["id"] === lastID[Object.keys(lastID).length - 1]) {
+            for (let i=0; i <Object.keys(students).length; i++) {
+
+                if (students[i]["id"] === lastID[lastID[0]][0]) {
                     students[i]["incorrect"]++;
                     $.post("random.php",
                         {
@@ -158,7 +160,6 @@ $(document).ready(function () {
                 }
             }
         }
-
         updateTable();
         $("#victim").html(selectStudent2(currentPeriod, lastID[currentPeriod]));
 
@@ -218,7 +219,7 @@ $(document).ready(function () {
                 </div>
             </div>
             <div class="btn-group float-right">
-             <button class="btn btn-outline-danger" id="absentButton" type="button" onclick="toggleStudentAbsent(getIndexByID(lastID[0]));">Mark Absent</button>
+             <button class="btn btn-outline-danger" id="absentButton" type="button" onclick="toggleStudentAbsent(getIndexByID(lastID[lastID[0]][0]));">Mark Absent</button>
             </div>
         </div>
     </div>
