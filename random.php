@@ -18,9 +18,8 @@ if (!$_POST) {
         echo $e->getMessage();
         exit;
     }
-    //$lastID = $db->query("SELECT `lastID` FROM `globalPreferences`;")->fetch();
-    $lastID = '[{},{"null":null},{}]';
     $globalPrefs = $db->query("SELECT * FROM `globalPreferences`;")->fetchAll(PDO::FETCH_ASSOC);
+    $lastID = $db->query("SELECT * FROM `lastID`;")->fetchAll(PDO::FETCH_ASSOC);
     $periodPrefs = $db->query("SELECT * FROM `periodPreferences`;")->fetchAll(PDO::FETCH_OBJ);
     $students =  $db->query("SELECT * FROM `STUDENTS`;")->fetchAll(PDO::FETCH_OBJ);
     //Check if the students were absent today or earlier. If earlier, reset absence.
@@ -66,12 +65,12 @@ if(isset($_GET['p']) && ($_GET['p'] <= $globalPrefs[0]['numPeriods'])) {
 //Get the student data from the database via PHP
 let students = JSON.parse('<?php echo json_encode($students,JSON_NUMERIC_CHECK ); ?>',(k, v) => v === "true" ? true : v === "false" ? false : v);
 let periodPreferences = JSON.parse('<?php echo json_encode($periodPrefs,JSON_NUMERIC_CHECK ); ?>',(k, v) => v === "true" ? true : v === "false" ? false : v);
-let lastID = JSON.parse('<?php echo $lastID; ?>');
 // This should make the period preferences indexes correspond with their number, saving a lot of headache.
 periodPreferences.unshift(null);
 
 //Have PHP write in the preferences from the database into a JSON array
 let globalPreferences = JSON.parse('<?php echo json_encode($globalPrefs[0], JSON_NUMERIC_CHECK); ?>',(k, v) => v === "true" ? true : v === "false" ? false : v);
+let lastID = JSON.parse('<?php echo $lastID[0]["lastID"]; ?>');
 let currentPeriod;
 
 

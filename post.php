@@ -9,7 +9,7 @@ function handlepost() {
     $updateGlobalPrefs_sql = "UPDATE `globalPreferences` SET `numPeriods` = :numPeriods, `defaultPeriod` = :defaultPeriod WHERE `id` = 0;";
     $updatePeriodPrefs_sql = "UPDATE `periodPreferences` SET `allowVolunteers` = :allowVolunteers, `minimumBetween`= :minimumBetween, `nameSelection` = :nameSelection WHERE `id`= :period;";
     $writeStudent_sql = "UPDATE `STUDENTS` SET `coefficient` = :coefficient, `enabled` = :enabled, `absent` = :absent, `absentDate` = :date WHERE `id` = :id;";
-    $lastID_sql = "REPLACE INTO `globalPreferences` (`lastID`) VALUES (:lastID);";
+    $lastID_sql = "UPDATE `lastID` SET `lastID` = :lastID  ;";
 
     $timeZone = new DateTimeZone('America/Los_Angeles');
     $dt = new DateTime();
