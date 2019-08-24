@@ -163,6 +163,7 @@ function periodMenuDropDownf() {
             + ');" id="p'
             + i
             + '">'
+            + (i === currentPeriod ? "✓":" ")
             + i
             + "</span>");
 
@@ -246,7 +247,7 @@ function updatePrefs () {
 }
 
 function updateNameSelection(period) {
-    periodPreferences[period]["nameSelection"] = $('input[name=nameSelectRadios'+period+']:checked').val();
+    periodPreferences[period]["nameSelection"] = Number($('input[name=nameSelectRadios'+period+']:checked').val());
     writePeriodPrefs(period);
 }
 
@@ -349,11 +350,11 @@ function selectStudent2 (period, periodLastID) {
     for (let i=0;i < Object.keys(studentsSelectable).length; i++) {
         if (winner === studentsSelectable[i]["id"]) {
             let output =  studentsSelectable[i]["f_name"];
-            if (periodPreferences[period]['nameSelection'] === 3) {
+            if (periodPreferences[period]["nameSelection"] === 3) {
                 output += " ";
                 output += studentsSelectable[i]["l_name"];
             }
-            if (periodPreferences[period]['nameSelection'] === 5) {
+            if (periodPreferences[period]["nameSelection"] === 5) {
                 output += " ";
                 output += studentsSelectable[i]["l_name"][0];
                 if(i!==0) {
