@@ -17,9 +17,10 @@ function writeStudent(index)
 function toggleStudentEnabled(index)
 {
     students[index]["enabled"] === true ? students[index]["enabled"] = false:students[index]["enabled"] = true;
+    writeStudent(index);
     updateTable();
 }
-
+/*
 function saveEnabled() {
     const statusBarText = $("#statusBar").html();
     for(let i=0; i <Object.keys(students).length; i++) {
@@ -30,7 +31,7 @@ function saveEnabled() {
     $("#statusBar").html(statusBarText);
     updateTable();
 }
-
+*/
 
 function toggleStudentAbsent(index) {
         students[index]["absent"] === true ? students[index]["absent"] = false : students[index]["absent"] = true;

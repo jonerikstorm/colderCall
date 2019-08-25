@@ -251,7 +251,6 @@ $(document).ready(function () {
                 </thead>
                 <tbody id="studentTable"></tbody>
                 </table>
-                <button class="btn btn-outline-primary" id="storeEnabled" type="button" onclick="saveEnabled();">Save Enabled Statuses</button>
             </div>
         </div>
     </div>
