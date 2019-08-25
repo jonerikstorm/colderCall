@@ -28,23 +28,17 @@ CREATE TABLE globalPreferences (
                           UNIQUE
                           CHECK (numPeriods < 10),
     version       TEXT    NOT NULL
-                          DEFAULT ('0.3.0'),
-    lastID        TEXT
+                          DEFAULT ('1.0.0') 
 );
-INSERT INTO globalPreferences (
-                                  id,
-                                  defaultPeriod,
-                                  numPeriods,
-                                  version,
-                                  lastID
-                              )
-                              VALUES (
-                                  4,
-                                  1,
-                                  6,
-                                  '0.3.0',
-                                  '[{},{},{}]'
-                              );
+
+
+-- Table: lastID
+CREATE TABLE lastID (
+    lastID TEXT
+);
+
+
+-- Table: periodPreferences
 CREATE TABLE periodPreferences (
     id              INTEGER PRIMARY KEY AUTOINCREMENT
                             NOT NULL
@@ -61,127 +55,13 @@ CREATE TABLE periodPreferences (
                             DEFAULT (3) 
 );
 
-INSERT INTO periodPreferences (
-                                  id,
-                                  allowVolunteers,
-                                  minimumBetween,
-                                  nameSelection
-                              )
-                              VALUES (
-                                  1,
-                                  'false',
-                                  0,
-                                  3
-                              );
 
-INSERT INTO periodPreferences (
-                                  id,
-                                  allowVolunteers,
-                                  minimumBetween,
-                                  nameSelection
-                              )
-                              VALUES (
-                                  2,
-                                  'false',
-                                  0,
-                                  3
-                              );
-
-INSERT INTO periodPreferences (
-                                  id,
-                                  allowVolunteers,
-                                  minimumBetween,
-                                  nameSelection
-                              )
-                              VALUES (
-                                  3,
-                                  'false',
-                                  0,
-                                  3
-                              );
-
-INSERT INTO periodPreferences (
-                                  id,
-                                  allowVolunteers,
-                                  minimumBetween,
-                                  nameSelection
-                              )
-                              VALUES (
-                                  4,
-                                  'false',
-                                  0,
-                                  3
-                              );
-
-INSERT INTO periodPreferences (
-                                  id,
-                                  allowVolunteers,
-                                  minimumBetween,
-                                  nameSelection
-                              )
-                              VALUES (
-                                  5,
-                                  'false',
-                                  0,
-                                  3
-                              );
-
-INSERT INTO periodPreferences (
-                                  id,
-                                  allowVolunteers,
-                                  minimumBetween,
-                                  nameSelection
-                              )
-                              VALUES (
-                                  6,
-                                  'false',
-                                  0,
-                                  3
-                              );
-
-INSERT INTO periodPreferences (
-                                  id,
-                                  allowVolunteers,
-                                  minimumBetween,
-                                  nameSelection
-                              )
-                              VALUES (
-                                  7,
-                                  'false',
-                                  0,
-                                  3
-                              );
-
-INSERT INTO periodPreferences (
-                                  id,
-                                  allowVolunteers,
-                                  minimumBetween,
-                                  nameSelection
-                              )
-                              VALUES (
-                                  8,
-                                  'false',
-                                  0,
-                                  3
-                              );
-
-INSERT INTO periodPreferences (
-                                  id,
-                                  allowVolunteers,
-                                  minimumBetween,
-                                  nameSelection
-                              )
-                              VALUES (
-                                  9,
-                                  'false',
-                                  0,
-                                  3
-                              );
+-- Table: STUDENTS
 CREATE TABLE STUDENTS (
     id          INT     PRIMARY KEY
-                        UNIQUE
                         NOT NULL
-                        DEFAULT (1),
+                        DEFAULT (1) 
+                        UNIQUE,
     l_name      TEXT    NOT NULL,
     f_name      TEXT    NOT NULL,
     correct     INT     DEFAULT (0),
@@ -199,10 +79,11 @@ CREATE TABLE STUDENTS (
                         CHECK (coefficient >= 0 AND 
                                coefficient <= 10) 
 );
-COMMIT TRANSACTION;
-PRAGMA foreign_keys = on;
 
-";
+
+COMMIT TRANSACTION;
+PRAGMA foreign_keys = on;"
+;
 function db_init()
 {
     $db_init = new PDO("sqlite:coldcalls.sqlite3");
