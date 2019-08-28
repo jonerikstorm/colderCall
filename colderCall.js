@@ -152,6 +152,7 @@ function toggleVolunteers(period)
 function changePeriod (period) {
     currentPeriod = period;
     updateTable();
+    periodMenuDropDownf();
 }
 
 function periodMenuDropDownf() {
